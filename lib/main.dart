@@ -1,31 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app/app.dart';
 import 'core/services/ad_service.dart';
 import 'core/services/remote_config_service.dart';
 import 'core/services/revenue_cat_service.dart';
 import 'core/utils/logger.dart';
+import 'features/onboarding/presentation/providers/onboarding_provider.dart';
 
 /// Application entry point.
 ///
-/// Initialisation order is deliberate:
+/// Initialisation order:
 /// 1. Flutter binding
-/// 2. Monetisation SDKs (no-ops when FeatureToggles are false)
-/// 3. [ProviderScope] wraps the full widget tree for Riverpod DI
+/// 2. SharedPreferences (blocking — required before any provider reads it)
+/// 3. Remote Config + Monetisation (non-blocking if they fail)
+/// 4. ProviderScope with SharedPreferences override → runApp
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase and Remote Config will be initialised here once
-  // google-services.json / GoogleService-Info.plist are added.
-  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // await RemoteConfigService.init();
+  // Pre-initialise SharedPreferences so providers can read it synchronously.
+  final prefs = await SharedPreferences.getInstance();
 
   await RemoteConfigService.init();
   await _bootstrapMonetisation();
 
   runApp(
-    const ProviderScope(
-      child: UvDosimeterApp(),
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const UvDosimeterApp(),
     ),
   );
 }
@@ -37,7 +41,6 @@ Future<void> _bootstrapMonetisation() async {
     await RevenueCatService.init();
     await AdService.init();
   } catch (e, st) {
-    // Non-fatal: monetisation failure must never crash the app.
     appLogger.e('Monetisation bootstrap error', error: e, stackTrace: st);
   }
 }

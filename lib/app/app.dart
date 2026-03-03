@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
 import 'router/app_router.dart';
 
@@ -23,6 +24,7 @@ class UvDosimeterApp extends StatelessWidget {
       theme: AppTheme.light,
       routerConfig: appRouter,
       localizationsDelegates: const [
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

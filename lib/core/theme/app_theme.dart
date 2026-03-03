@@ -29,7 +29,7 @@ class AppTheme {
         titleTextStyle: AppTypography.headlineMed,
         iconTheme: const IconThemeData(color: AppColors.deepInk),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.cardSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(

@@ -6,7 +6,9 @@ class AppConfig {
   AppConfig._();
 
   // ── API ──────────────────────────────────────────────────────────────────
-  static const String baseUrl = 'http://localhost:8000/api/v1';
+  // Use the machine's LAN IP so physical devices on the same WiFi can reach
+  // the dev server. Replace with a real domain before shipping to production.
+  static const String baseUrl = 'http://192.168.3.58:8000/api/v1';
   static const Duration connectTimeout = Duration(seconds: 10);
   static const Duration receiveTimeout = Duration(seconds: 30);
   static const Duration sendTimeout = Duration(seconds: 60);

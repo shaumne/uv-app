@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -51,6 +52,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   Widget build(BuildContext context) {
     final scanState = ref.watch(scanNotifierProvider);
     final notifier = ref.read(scanNotifierProvider.notifier);
+    final l10n = AppLocalizations.of(context)!;
 
     // Navigate to result on success
     ref.listen<ScanState>(scanNotifierProvider, (_, next) {
@@ -73,8 +75,26 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
           // ── Vignette overlay ────────────────────────────────────────────
           const _VignetteOverlay(),
 
-          // ── Pulse frame — centre of screen ──────────────────────────────
-          if (!scanState.isLoading) const Center(child: PulseOverlayFrame()),
+          // ── Camera initialising spinner ─────────────────────────────────
+          if (!scanState.isCameraReady && !scanState.isLoading)
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(color: Colors.white54),
+                  const SizedBox(height: 12),
+                  Text(
+                    l10n.scan_cameraStarting,
+                    style: AppTypography.bodyMedium
+                        .copyWith(color: Colors.white54),
+                  ),
+                ],
+              ),
+            ),
+
+          // ── Pulse frame — only after camera is ready ─────────────────────
+          if (scanState.isCameraReady && !scanState.isLoading)
+            const Center(child: PulseOverlayFrame()),
 
           // ── Analysing spinner ───────────────────────────────────────────
           if (scanState.isLoading)
@@ -86,8 +106,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   const SizedBox(height: 16),
                   Text(
                     scanState.status == ScanStatus.capturing
-                        ? 'Capturing…'
-                        : 'Analysing sticker…',
+                        ? l10n.scan_capturing
+                        : l10n.scan_analysing,
                     style: AppTypography.bodyMedium
                         .copyWith(color: Colors.white70),
                   ),
@@ -114,6 +134,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
             child: _BottomControls(
               isTorchOn: scanState.isTorchOn,
               isCapturing: scanState.isLoading,
+              isCameraReady: scanState.isCameraReady,
+              guideHint: l10n.scan_guideOverlay_hint,
               onTorchToggle: notifier.toggleTorch,
               onCapture: () => _capture(notifier),
             ),
@@ -194,12 +216,16 @@ class _BottomControls extends StatelessWidget {
   const _BottomControls({
     required this.isTorchOn,
     required this.isCapturing,
+    required this.isCameraReady,
+    required this.guideHint,
     required this.onTorchToggle,
     required this.onCapture,
   });
 
   final bool isTorchOn;
   final bool isCapturing;
+  final bool isCameraReady;
+  final String guideHint;
   final VoidCallback onTorchToggle;
   final VoidCallback onCapture;
 
@@ -216,9 +242,8 @@ class _BottomControls extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Align the sticker inside the frame',
-            style:
-                AppTypography.bodyMedium.copyWith(color: Colors.white70),
+            guideHint,
+            style: AppTypography.bodyMedium.copyWith(color: Colors.white70),
           ),
           const SizedBox(height: 24),
           Row(
@@ -234,16 +259,16 @@ class _BottomControls extends StatelessWidget {
                 onPressed: onTorchToggle,
               ),
 
-              // Capture button
+              // Capture button — disabled while camera is initialising
               GestureDetector(
-                onTap: isCapturing ? null : onCapture,
+                onTap: (isCapturing || !isCameraReady) ? null : onCapture,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isCapturing
+                    color: (isCapturing || !isCameraReady)
                         ? Colors.white38
                         : Colors.white,
                     border: Border.all(
@@ -259,7 +284,15 @@ class _BottomControls extends StatelessWidget {
                             color: Colors.white,
                           ),
                         )
-                      : null,
+                      : !isCameraReady
+                          ? const Padding(
+                              padding: EdgeInsets.all(22),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white54,
+                              ),
+                            )
+                          : null,
                 ),
               ),
 

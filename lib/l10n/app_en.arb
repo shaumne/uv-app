@@ -97,6 +97,7 @@
 
   "scan_capturing": "Capturing…",
   "scan_analysing": "Analysing sticker…",
+  "scan_cameraStarting": "Starting camera…",
   "scan_torch_on": "Torch on",
   "scan_torch_off": "Torch off",
   "scan_back": "Back",

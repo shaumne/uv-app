@@ -2,12 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/skin_profile.dart';
 import 'onboarding_provider.dart';
 
-/// Reads the persisted [SkinProfile] from SharedPreferences.
+/// Reads the persisted [SkinProfile] from local storage via the repository.
 ///
-/// Returns a default (Type II, SPF 30) profile if nothing is stored yet,
-/// so downstream providers always have a valid non-null value to work with.
+/// Returns a fallback (Type II, SPF 30) if nothing is stored yet,
+/// so downstream providers always receive a valid non-null profile.
 final storedSkinProfileProvider = FutureProvider<SkinProfile>((ref) async {
-  final prefs = await ref.watch(sharedPreferencesProvider.future);
   final repo = ref.watch(skinProfileRepositoryProvider);
   final result = await repo.load();
   return result.fold(

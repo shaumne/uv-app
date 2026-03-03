@@ -45,12 +45,16 @@ class ScanState {
     this.result,
     this.failure,
     this.isTorchOn = false,
+    this.isCameraReady = false,
   });
 
   final ScanStatus status;
   final UvAnalysisResult? result;
   final Failure? failure;
   final bool isTorchOn;
+
+  /// True once [CameraController.initialize()] has completed successfully.
+  final bool isCameraReady;
 
   bool get isLoading =>
       status == ScanStatus.capturing || status == ScanStatus.analysing;
@@ -60,12 +64,14 @@ class ScanState {
     UvAnalysisResult? result,
     Failure? failure,
     bool? isTorchOn,
+    bool? isCameraReady,
   }) =>
       ScanState(
         status: status ?? this.status,
         result: result ?? this.result,
         failure: failure,
         isTorchOn: isTorchOn ?? this.isTorchOn,
+        isCameraReady: isCameraReady ?? this.isCameraReady,
       );
 }
 
@@ -105,6 +111,8 @@ class ScanNotifier extends StateNotifier<ScanState> {
         enableAudio: false,
       );
       await _cameraController!.initialize();
+      // Mark camera as ready so the UI enables the capture button.
+      state = state.copyWith(isCameraReady: true);
       return _cameraController;
     } on CameraException catch (e) {
       appLogger.e('[ScanNotifier] Camera init error', error: e);

@@ -22,7 +22,7 @@ final uvIndexRemoteDatasourceProvider = Provider<UvIndexRemoteDatasource>(
 
 final doseHistoryLocalDatasourceProvider = Provider<DoseHistoryLocalDatasource>(
   (ref) => DoseHistoryLocalDatasourceImpl(
-    ref.watch(sharedPreferencesProvider).requireValue,
+    ref.watch(sharedPreferencesProvider),
   ),
 );
 
@@ -158,21 +158,16 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
 final homeNotifierProvider =
     StateNotifierProvider.autoDispose<HomeNotifier, HomeState>((ref) {
-  // Read cached Fitzpatrick type from SharedPreferences
-  final prefs = ref.watch(sharedPreferencesProvider).maybeWhen(
-        data: (p) => p,
-        orElse: () => null,
-      );
+  // Read cached Fitzpatrick type from SharedPreferences (pre-initialised).
+  final prefs = ref.watch(sharedPreferencesProvider);
 
   int fitzpatrickType = 2;
-  if (prefs != null) {
-    final raw = prefs.getString('skin_profile');
-    if (raw != null) {
-      try {
-        final map = jsonDecode(raw) as Map<String, dynamic>;
-        fitzpatrickType = (map['fitzpatrick_type'] as int?) ?? 2;
-      } catch (_) {}
-    }
+  final raw = prefs.getString('skin_profile');
+  if (raw != null) {
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      fitzpatrickType = (map['fitzpatrick_type'] as int?) ?? 2;
+    } catch (_) {}
   }
 
   final notifier = HomeNotifier(

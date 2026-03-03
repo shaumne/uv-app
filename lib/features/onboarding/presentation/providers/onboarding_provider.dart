@@ -9,13 +9,16 @@ import '../../domain/usecases/save_skin_profile.dart';
 
 // ── Infrastructure providers ─────────────────────────────────────────────────
 
-final sharedPreferencesProvider = FutureProvider<SharedPreferences>(
-  (_) => SharedPreferences.getInstance(),
+/// Pre-initialised in main.dart via ProviderScope.overrides — never throws.
+final sharedPreferencesProvider = Provider<SharedPreferences>(
+  (_) => throw UnimplementedError(
+    'sharedPreferencesProvider must be overridden in ProviderScope',
+  ),
 );
 
 final skinProfileLocalDatasourceProvider =
     Provider<SkinProfileLocalDatasource>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider).requireValue;
+  final prefs = ref.watch(sharedPreferencesProvider);
   return SkinProfileLocalDatasourceImpl(prefs);
 });
 

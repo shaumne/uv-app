@@ -244,6 +244,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scan_analysing => 'Analysing sticker…';
 
   @override
+  String get scan_cameraStarting => 'Starting camera…';
+
+  @override
   String get scan_torch_on => 'Torch on';
 
   @override

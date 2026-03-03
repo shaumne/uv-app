@@ -254,6 +254,32 @@ def classify_risk(
     return RiskLevel.SAFE
 
 
+def classify_risk_by_sticker(uv_percent: float, minutes_remaining: float) -> RiskLevel:
+    """
+    Risk classification driven primarily by the sticker's raw UV% reading.
+
+    The photochromic sticker measures ambient UV without SPF — its reading
+    directly reflects environmental dose intensity. SPF only extends the
+    time budget; it does not lower the sticker alarm level.
+
+    Thresholds (sticker UV%):
+        EXCEEDED  ≥ 100%  sticker fully saturated
+        DANGER    ≥  75%  OR  minutes_remaining ≤ 0
+        WARNING   ≥  50%  OR  minutes_remaining < 10
+        CAUTION   ≥  30%  OR  minutes_remaining < 30
+        SAFE      all other cases
+    """
+    if uv_percent >= 100.0:
+        return RiskLevel.EXCEEDED
+    if uv_percent >= 75.0 or minutes_remaining <= 0:
+        return RiskLevel.DANGER
+    if uv_percent >= 50.0 or minutes_remaining < 10:
+        return RiskLevel.WARNING
+    if uv_percent >= 30.0 or minutes_remaining < 30:
+        return RiskLevel.CAUTION
+    return RiskLevel.SAFE
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Convenience: convert UV% from sticker scan to J/m² dose increment
 # ──────────────────────────────────────────────────────────────────────────────

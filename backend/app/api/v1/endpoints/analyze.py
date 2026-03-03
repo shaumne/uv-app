@@ -18,7 +18,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 
 from ....models.response_models import AnalyzeResponse
 from ....services.colorimetry_service import extract_sticker_data
-from ....services.med_calculator import calculate_uv_risk, uv_percent_to_dose_jm2
+from ....services.med_calculator import calculate_uv_risk, uv_percent_to_dose_jm2, classify_risk_by_sticker
 from ....utils.image_validator import validate_image
 
 logger = logging.getLogger(__name__)
@@ -125,6 +125,21 @@ async def analyze_sticker(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         ) from exc
+
+    # ── Step 5: Override risk level with sticker-driven classifier ───────────
+    # The sticker measures raw ambient UV without SPF attenuation.
+    # SPF is correctly used for minutes_remaining, but the danger alarm must
+    # reflect what the sticker reports — otherwise SPF 30 always shows "safe"
+    # even when the sticker is fully saturated.
+    sticker_risk = classify_risk_by_sticker(
+        uv_percent=uv_percent,
+        minutes_remaining=risk_payload["minutes_remaining"],
+    )
+    risk_payload["risk_level"] = sticker_risk.value
+
+    # dose_percentage shown to user = sticker UV%, not SPF-adjusted fraction.
+    # This ensures the displayed percentage matches what the sticker reads.
+    risk_payload["dose_percentage"] = round(min(uv_percent, 999.9), 1)
 
     return AnalyzeResponse(
         hex_color=hex_color,

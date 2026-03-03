@@ -97,6 +97,7 @@
 
   "scan_capturing": "Çekiliyor…",
   "scan_analysing": "Sticker analiz ediliyor…",
+  "scan_cameraStarting": "Kamera başlatılıyor…",
   "scan_torch_on": "Flaş açık",
   "scan_torch_off": "Flaş kapalı",
   "scan_back": "Geri",

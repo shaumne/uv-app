@@ -97,6 +97,7 @@
 
   "scan_capturing": "撮影中…",
   "scan_analysing": "ステッカーを解析中…",
+  "scan_cameraStarting": "カメラを起動中…",
   "scan_torch_on": "ライトオン",
   "scan_torch_off": "ライトオフ",
   "scan_back": "戻る",

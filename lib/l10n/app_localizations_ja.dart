@@ -240,6 +240,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scan_analysing => 'ステッカーを解析中…';
 
   @override
+  String get scan_cameraStarting => 'カメラを起動中…';
+
+  @override
   String get scan_torch_on => 'ライトオン';
 
   @override

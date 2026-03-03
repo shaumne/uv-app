@@ -520,6 +520,12 @@ abstract class AppLocalizations {
   /// **'Analysing sticker…'**
   String get scan_analysing;
 
+  /// No description provided for @scan_cameraStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting camera…'**
+  String get scan_cameraStarting;
+
   /// No description provided for @scan_torch_on.
   ///
   /// In en, this message translates to:

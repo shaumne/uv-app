@@ -252,6 +252,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scan_analysing => 'Sticker analiz ediliyor…';
 
   @override
+  String get scan_cameraStarting => 'Kamera başlatılıyor…';
+
+  @override
   String get scan_torch_on => 'Flaş açık';
 
   @override
