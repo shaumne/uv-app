@@ -1,0 +1,130 @@
+{
+  "@@locale": "ja",
+
+  "appName": "UVドシメーター",
+
+  "onboarding_welcome_title": "あなたの肌を知ろう",
+  "onboarding_welcome_subtitle": "いくつかの質問にお答えいただき、パーソナライズされた美白ケアを始めましょう。",
+  "onboarding_fitzpatrick_question": "あなたの肌色に近いのはどれですか？",
+  "onboarding_fitzpatrickType1_label": "タイプⅠ — 非常に白い肌",
+  "onboarding_fitzpatrickType1_desc": "必ず日焼けする・絶対に褐色にならない",
+  "onboarding_fitzpatrickType2_label": "タイプⅡ — 白い肌",
+  "onboarding_fitzpatrickType2_desc": "よく日焼けする・ときどき褐色になる",
+  "onboarding_fitzpatrickType3_label": "タイプⅢ — 普通の肌",
+  "onboarding_fitzpatrickType3_desc": "ときどき日焼けする・必ず褐色になる",
+  "onboarding_fitzpatrickType4_label": "タイプⅣ — オリーブ色の肌",
+  "onboarding_fitzpatrickType4_desc": "ほとんど日焼けしない・必ず褐色になる",
+  "onboarding_fitzpatrickType5_label": "タイプⅤ — 褐色の肌",
+  "onboarding_fitzpatrickType5_desc": "めったに日焼けしない",
+  "onboarding_fitzpatrickType6_label": "タイプⅥ — 非常に濃い褐色の肌",
+  "onboarding_fitzpatrickType6_desc": "まったく日焼けしない",
+  "onboarding_spf_question": "現在お使いの日焼け止めのSPF値を教えてください。",
+  "onboarding_spf_none": "なし（SPF 1）",
+  "onboarding_continue_button": "次へ",
+  "onboarding_start_button": "美白ケアをはじめる",
+
+  "home_uvIndex_label": "UV指数",
+  "home_uvRisk_low": "低い",
+  "home_uvRisk_moderate": "普通",
+  "home_uvRisk_high": "高い",
+  "home_uvRisk_veryHigh": "非常に高い",
+  "home_uvRisk_extreme": "極めて高い",
+  "home_dailyDose_label": "本日の紫外線量",
+  "home_safeTimeRemaining_label": "美白を守れる残り時間",
+  "home_safeTimeRemaining_value": "{minutes}分",
+  "@home_safeTimeRemaining_value": {
+    "description": "アークゲージの下に表示される安全な日光浴の残り時間。",
+    "placeholders": {
+      "minutes": { "type": "int", "format": "decimalPattern" }
+    }
+  },
+  "home_scan_button": "ステッカーをスキャン",
+  "home_noData_hint": "ステッカーをスキャンして美白ケアの記録を始めましょう。",
+
+  "scan_screen_title": "スキャン",
+  "scan_guideOverlay_hint": "ステッカーを枠内に合わせてください",
+  "scan_progress_label": "解析中…",
+
+  "result_screen_title": "あなたの美白レポート",
+  "result_safe_message": "今日はしっかり美白を守れています✨",
+  "result_warning_message": "本日の紫外線ケア目標の{percent}%に達しました。少し日陰で休んで、お肌を労わりましょう🌿",
+  "@result_warning_message": {
+    "description": "結果画面に表示される累積UV量のパーセンテージ。",
+    "placeholders": {
+      "percent": { "type": "int", "format": "decimalPattern" }
+    }
+  },
+  "result_danger_message": "本日の紫外線ケアが完了しました。日陰でうるおいを補給しましょう💕",
+  "result_medUsed_label": "使用済みMED",
+  "result_spfStatus_label": "SPF状態",
+  "result_recommendedAction_label": "おすすめのケア",
+  "result_action_reapplySunscreen": "日焼け止め（SPF{spf}）を塗り直して、キメを整えましょう",
+  "@result_action_reapplySunscreen": {
+    "placeholders": {
+      "spf": { "type": "int" }
+    }
+  },
+  "result_action_seekShade": "日陰でハリとうるおいを補給しましょう",
+  "result_action_allGood": "美しい肌を保ちながら、日差しをお楽しみください",
+  "result_scanAgain_button": "もう一度スキャン",
+
+  "notification_uvPeak_body": "紫外線が強くなっています✨ 日焼け止めを塗り直して、美白をキープしましょう！",
+  "notification_spfExpired_body": "日焼け止めの効果が薄れている可能性があります。塗り直してハリとうるおいを守りましょう💕",
+  "notification_threshold80_body": "本日の紫外線ケア目標の80%に達しました。少し日陰で休んで、お肌を労わりましょう🌿",
+  "notification_dailyDone_body": "本日の紫外線ケアが完了しました🎉 美しい肌を守れましたね。お疲れさまでした！",
+  "notification_morningReminder_body": "おはようございます☀️ 今日も紫外線対策をしっかりして、キメ細やかな素肌を保ちましょう！",
+
+  "error_network": "インターネット接続がありません。設定を確認してください。",
+  "error_camera": "ステッカーをスキャンするにはカメラのアクセスが必要です。",
+  "error_location": "現地のUVデータを取得するために位置情報が必要です。",
+  "error_server": "サーバーが一時的に利用できません。しばらくしてから再度お試しください。",
+  "error_unknown": "予期しないエラーが発生しました。アプリを再起動してください。",
+  "error_retry_button": "再試行",
+  "error_settings_button": "設定を開く",
+
+  "onboarding_splash_title": "あなたの肌を\n知ろう。",
+  "onboarding_splash_body": "ステッカーがリアルタイムで紫外線を測定します。\n色を美白ケアに変えましょう。",
+  "onboarding_spf_label": "日焼け止めSPF",
+  "onboarding_spf_noneLabel": "なし",
+
+  "home_title": "今日のUV",
+  "home_noData_hint2": "ステッカーをスキャンして記録を始めましょう。",
+  "home_status_safe": "今日はしっかり美白を守れています✨",
+  "home_status_caution": "1日の半分以上の紫外線量を受けました。",
+  "home_status_warning": "1日の上限に近づいています。",
+  "home_status_danger": "本日の上限に達しました。日陰でうるおいを補給しましょう💕",
+  "home_pullToRefresh": "引っ張って更新",
+
+  "scan_capturing": "撮影中…",
+  "scan_analysing": "ステッカーを解析中…",
+  "scan_torch_on": "ライトオン",
+  "scan_torch_off": "ライトオフ",
+  "scan_back": "戻る",
+
+  "result_safe_full": "今日はしっかり美白を守れています✨",
+  "result_caution_full": "順調です。あと{minutes}分、安全に過ごせます。",
+  "@result_caution_full": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "result_warning_full": "本日の紫外線ケア目標の{percent}%に達しました。少し日陰で休んで、お肌を労わりましょう🌿",
+  "@result_warning_full": {
+    "placeholders": { "percent": { "type": "String" } }
+  },
+  "result_danger_full": "本日の上限に達しました。\n日陰でうるおいを補給しましょう💕",
+  "result_exceeded_full": "上限に近づいています。\n日陰でハリを守りましょう。",
+  "result_uvReading_label": "紫外線量",
+  "result_timeLeft_label": "分残り",
+  "result_action_shade": "すぐに日陰に移動してください。",
+  "result_action_partial": "少し日陰に移動することをお勧めします。",
+  "result_action_reapply": "日焼け止めを塗り直して保護を維持しましょう。",
+  "result_action_caution": "日差しを楽しみながら、日焼け止めの塗り直しをそろそろ。",
+  "result_action_good": "美しい肌を保ちながら、日差しをお楽しみください。",
+  "result_spfFaded": "日焼け止めの効果が薄れています。塗り直してハリとうるおいを守りましょう💕",
+  "result_spfCurrent": "現在のSPF効果: ",
+  "result_backHome": "ダッシュボードに戻る",
+
+  "premium_title": "UVドシメーター プレミアム",
+  "premium_body": "高度な肌分析、日焼け履歴、パーソナライズされたUVレポートをご利用いただけます。",
+  "premium_upgrade_button": "プレミアムにアップグレード",
+  "premium_later_button": "あとで"
+}

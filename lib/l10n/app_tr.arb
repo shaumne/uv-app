@@ -1,0 +1,130 @@
+{
+  "@@locale": "tr",
+
+  "appName": "UV Dozimetre",
+
+  "onboarding_welcome_title": "Cildinizi Tanıyın",
+  "onboarding_welcome_subtitle": "Kişiselleştirilmiş UV korumanız için birkaç soruyu yanıtlayın.",
+  "onboarding_fitzpatrick_question": "Cilt tonunuzu en iyi hangisi tanımlar?",
+  "onboarding_fitzpatrickType1_label": "Tip I — Çok Açık Ten",
+  "onboarding_fitzpatrickType1_desc": "Her zaman yanar, hiç bronzlaşmaz",
+  "onboarding_fitzpatrickType2_label": "Tip II — Açık Ten",
+  "onboarding_fitzpatrickType2_desc": "Genellikle yanar, bazen bronzlaşır",
+  "onboarding_fitzpatrickType3_label": "Tip III — Orta Ten",
+  "onboarding_fitzpatrickType3_desc": "Bazen yanar, her zaman bronzlaşır",
+  "onboarding_fitzpatrickType4_label": "Tip IV — Zeytin Teni",
+  "onboarding_fitzpatrickType4_desc": "Nadiren yanar, her zaman bronzlaşır",
+  "onboarding_fitzpatrickType5_label": "Tip V — Esmer Ten",
+  "onboarding_fitzpatrickType5_desc": "Çok nadiren yanar",
+  "onboarding_fitzpatrickType6_label": "Tip VI — Koyu Esmer Ten",
+  "onboarding_fitzpatrickType6_desc": "Hiç yanmaz",
+  "onboarding_spf_question": "Kullandığınız güneş kremi SPF değeri nedir?",
+  "onboarding_spf_none": "Yok (SPF 1)",
+  "onboarding_continue_button": "Devam",
+  "onboarding_start_button": "Cildimi Korumaya Başla",
+
+  "home_uvIndex_label": "UV İndeksi",
+  "home_uvRisk_low": "Düşük",
+  "home_uvRisk_moderate": "Orta",
+  "home_uvRisk_high": "Yüksek",
+  "home_uvRisk_veryHigh": "Çok Yüksek",
+  "home_uvRisk_extreme": "Aşırı",
+  "home_dailyDose_label": "Günlük Kullanılan Doz",
+  "home_safeTimeRemaining_label": "Kalan güvenli süre",
+  "home_safeTimeRemaining_value": "{minutes} dk",
+  "@home_safeTimeRemaining_value": {
+    "description": "Yay göstergesinin altında görüntülenen kalan güvenli güneş süresi.",
+    "placeholders": {
+      "minutes": { "type": "int", "format": "decimalPattern" }
+    }
+  },
+  "home_scan_button": "Sticker''ı Tara",
+  "home_noData_hint": "Takibi başlatmak için sticker''ı tarayın.",
+
+  "scan_screen_title": "Sticker Tara",
+  "scan_guideOverlay_hint": "Sticker''ı çerçeve içine hizalayın",
+  "scan_progress_label": "Analiz ediliyor…",
+
+  "result_screen_title": "UV Raporunuz",
+  "result_safe_message": "Bugün güzel korunuyorsunuz.",
+  "result_warning_message": "Günlük limitinizin %{percent}''ini kullandınız.",
+  "@result_warning_message": {
+    "description": "Sonuç ekranında gösterilen kümülatif UV yüzdesi.",
+    "placeholders": {
+      "percent": { "type": "int", "format": "decimalPattern" }
+    }
+  },
+  "result_danger_message": "Günlük limit doldu. Hemen gölgeye geçin.",
+  "result_medUsed_label": "Kullanılan MED",
+  "result_spfStatus_label": "SPF Durumu",
+  "result_recommendedAction_label": "Önerilen Eylem",
+  "result_action_reapplySunscreen": "Güneş kremini yenileyin (SPF {spf})",
+  "@result_action_reapplySunscreen": {
+    "placeholders": {
+      "spf": { "type": "int" }
+    }
+  },
+  "result_action_seekShade": "Hemen gölgeye geçin",
+  "result_action_allGood": "Güneşin tadını sorumlu şekilde çıkarın",
+  "result_scanAgain_button": "Tekrar Tara",
+
+  "notification_uvPeak_body": "UV seviyeleri yükseliyor! Güneş kremini yenileme zamanı — cildin sana teşekkür edecek.",
+  "notification_spfExpired_body": "Güneş kreminin koruyucu etkisi azalmış olabilir. Yeniden sürerek korunmaya devam et!",
+  "notification_threshold80_body": "Bugünkü güvenli UV limitinin %80''ine ulaştın. Gölgeye geçmeyi düşünebilirsin.",
+  "notification_dailyDone_body": "Bugünkü UV dozunu tamamladın! Cildin korunmuş olduğu için harika hissedecek.",
+  "notification_morningReminder_body": "Güne başlıyorsun! Bulutlu havalarda bile UV varsa, güneş kremini atlamayı unutma.",
+
+  "error_network": "İnternet bağlantısı yok. Ayarlarınızı kontrol edin.",
+  "error_camera": "Sticker''ı taramak için kamera izni gereklidir.",
+  "error_location": "Yerel UV verisi için konum izni gereklidir.",
+  "error_server": "Sunucumuz geçici olarak kullanılamıyor. Lütfen tekrar deneyin.",
+  "error_unknown": "Beklenmedik bir hata oluştu. Uygulamayı yeniden başlatın.",
+  "error_retry_button": "Tekrar Dene",
+  "error_settings_button": "Ayarları Aç",
+
+  "onboarding_splash_title": "Cildinizi\nTanıyın.",
+  "onboarding_splash_body": "Sticker''ınız UV''yi gerçek zamanlı ölçer.\nRengi cilt bakımına dönüştürüyoruz.",
+  "onboarding_spf_label": "Güneş Kremi SPF",
+  "onboarding_spf_noneLabel": "Yok",
+
+  "home_title": "Bugünkü UV",
+  "home_noData_hint2": "Takibi başlatmak için sticker''ı tarayın.",
+  "home_status_safe": "Bugün güzel korunuyorsunuz.",
+  "home_status_caution": "Günlük dozunuzun yarısından fazlasını kullandınız.",
+  "home_status_warning": "Günlük limitinize yaklaşıyorsunuz.",
+  "home_status_danger": "Günlük limit doldu. Hemen gölgeye geçin.",
+  "home_pullToRefresh": "Yenilemek için çekin",
+
+  "scan_capturing": "Çekiliyor…",
+  "scan_analysing": "Sticker analiz ediliyor…",
+  "scan_torch_on": "Flaş açık",
+  "scan_torch_off": "Flaş kapalı",
+  "scan_back": "Geri",
+
+  "result_safe_full": "Bugün güzel korunuyorsunuz. ✨",
+  "result_caution_full": "İyi gidiyorsunuz. {minutes} dakika güvenli süreniz kaldı.",
+  "@result_caution_full": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "result_warning_full": "Günlük limitinizin %{percent}''ini kullandınız.",
+  "@result_warning_full": {
+    "placeholders": { "percent": { "type": "String" } }
+  },
+  "result_danger_full": "Günlük limit doldu.\nGölgede dinlenme zamanı.",
+  "result_exceeded_full": "Günlük limitinize yaklaşıyorsunuz.\nGölgeye geçin.",
+  "result_uvReading_label": "UV Okuması",
+  "result_timeLeft_label": "dk kaldı",
+  "result_action_shade": "Hemen gölgeye geçin.",
+  "result_action_partial": "Yarı gölgeye geçmeyi düşünün.",
+  "result_action_reapply": "Korumayı sürdürmek için güneş kremini yenileyin.",
+  "result_action_caution": "Güneşin tadını çıkarın — güneş kremini yakında yenileyin.",
+  "result_action_good": "Güneşin tadını sorumlu şekilde çıkarın.",
+  "result_spfFaded": "SPF koruması azalmış — güneş kremini yenileyin",
+  "result_spfCurrent": "Mevcut SPF etkinliği: ",
+  "result_backHome": "Panele Dön",
+
+  "premium_title": "UV Dozimetre Premium",
+  "premium_body": "Gelişmiş cilt analizi, maruziyet geçmişi ve kişisel UV raporlarının kilidini açın.",
+  "premium_upgrade_button": "Premium''a Geç",
+  "premium_later_button": "Belki daha sonra"
+}

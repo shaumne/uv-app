@@ -1,0 +1,90 @@
+import 'package:dio/dio.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../../../core/error/exceptions.dart';
+import '../../../../core/utils/logger.dart';
+import '../../../result/domain/entities/uv_analysis_result.dart';
+import '../models/scan_request_model.dart';
+import '../../domain/entities/scan_request.dart';
+
+abstract interface class ScanRemoteDatasource {
+  Future<UvAnalysisResult> analyzeSticker({
+    required ScanRequest request,
+    required double cumulativeDoseJm2,
+    required double uvIndex,
+    required double hoursSinceApplication,
+  });
+}
+
+class ScanRemoteDatasourceImpl implements ScanRemoteDatasource {
+  const ScanRemoteDatasourceImpl(this._dio);
+  final Dio _dio;
+
+  @override
+  Future<UvAnalysisResult> analyzeSticker({
+    required ScanRequest request,
+    required double cumulativeDoseJm2,
+    required double uvIndex,
+    required double hoursSinceApplication,
+  }) async {
+    FormData formData;
+    try {
+      formData = await ScanRequestModel.toFormData(
+        request,
+        cumulativeDoseJm2,
+        uvIndex,
+        hoursSinceApplication,
+      );
+    } catch (e) {
+      throw ImageProcessingException(
+        message: 'Failed to prepare image for upload: $e',
+      );
+    }
+
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        ApiConstants.analyzeSticker,
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      final data = response.data;
+      if (data == null) {
+        throw const ServerException(message: 'Empty response from analysis API.');
+      }
+
+      appLogger.d('[ScanDatasource] Response: $data');
+      return _mapToEntity(data);
+    } on DioException catch (e) {
+      final body = e.response?.data;
+      final detail = body is Map ? body['detail'] ?? '' : '';
+
+      // Map server-side 422 error codes from colorimetry_service to client failures
+      if (e.response?.statusCode == 422) {
+        throw ImageProcessingException(message: detail.toString());
+      }
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout) {
+        throw NetworkException(message: e.message ?? 'Network unreachable.');
+      }
+      throw ServerException(
+        message: detail.toString().isNotEmpty ? detail.toString() : 'Analysis failed.',
+        statusCode: e.response?.statusCode,
+      );
+    }
+  }
+
+  /// Maps raw API JSON to [UvAnalysisResult] domain entity.
+  UvAnalysisResult _mapToEntity(Map<String, dynamic> json) {
+    return UvAnalysisResult(
+      hexColor: json['hex_color'] as String,
+      uvPercent: (json['uv_percent'] as num).toDouble(),
+      medUsedFraction: (json['dose_percentage'] as num).toDouble() / 100.0,
+      remainingMinutes: (json['minutes_remaining'] as num).toInt(),
+      riskLevel: json['risk_level'] as String,
+      spfEffectiveNow: (json['spf_effective_now'] as num).toDouble(),
+      sunscreenReapplyRecommended:
+          json['sunscreen_reapply_recommended'] as bool? ?? false,
+      analyzedAt: DateTime.now(),
+    );
+  }
+}

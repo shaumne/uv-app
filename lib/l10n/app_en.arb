@@ -1,0 +1,130 @@
+{
+  "@@locale": "en",
+
+  "appName": "UV Dosimeter",
+
+  "onboarding_welcome_title": "Know Your Skin",
+  "onboarding_welcome_subtitle": "Answer a few questions so we can personalise your UV protection.",
+  "onboarding_fitzpatrick_question": "Which skin tone best describes you?",
+  "onboarding_fitzpatrickType1_label": "Type I — Very Fair",
+  "onboarding_fitzpatrickType1_desc": "Always burns, never tans",
+  "onboarding_fitzpatrickType2_label": "Type II — Fair",
+  "onboarding_fitzpatrickType2_desc": "Usually burns, sometimes tans",
+  "onboarding_fitzpatrickType3_label": "Type III — Medium",
+  "onboarding_fitzpatrickType3_desc": "Sometimes burns, always tans",
+  "onboarding_fitzpatrickType4_label": "Type IV — Olive",
+  "onboarding_fitzpatrickType4_desc": "Rarely burns, always tans",
+  "onboarding_fitzpatrickType5_label": "Type V — Brown",
+  "onboarding_fitzpatrickType5_desc": "Very rarely burns",
+  "onboarding_fitzpatrickType6_label": "Type VI — Deep",
+  "onboarding_fitzpatrickType6_desc": "Never burns",
+  "onboarding_spf_question": "What SPF sunscreen are you wearing?",
+  "onboarding_spf_none": "None (SPF 1)",
+  "onboarding_continue_button": "Continue",
+  "onboarding_start_button": "Start Protecting My Skin",
+
+  "home_uvIndex_label": "UV Index",
+  "home_uvRisk_low": "Low",
+  "home_uvRisk_moderate": "Moderate",
+  "home_uvRisk_high": "High",
+  "home_uvRisk_veryHigh": "Very High",
+  "home_uvRisk_extreme": "Extreme",
+  "home_dailyDose_label": "Daily Dose Used",
+  "home_safeTimeRemaining_label": "Safe time remaining",
+  "home_safeTimeRemaining_value": "{minutes} min",
+  "@home_safeTimeRemaining_value": {
+    "description": "Remaining safe sun exposure minutes shown under the arc gauge.",
+    "placeholders": {
+      "minutes": { "type": "int", "format": "decimalPattern" }
+    }
+  },
+  "home_scan_button": "Scan My Sticker",
+  "home_noData_hint": "Scan your sticker to begin tracking.",
+
+  "scan_screen_title": "Scan Sticker",
+  "scan_guideOverlay_hint": "Align the sticker inside the frame",
+  "scan_progress_label": "Analysing…",
+
+  "result_screen_title": "Your UV Report",
+  "result_safe_message": "You''re well protected today.",
+  "result_warning_message": "You''ve used {percent}% of your daily limit.",
+  "@result_warning_message": {
+    "description": "Shows cumulative UV exposure percentage on result screen.",
+    "placeholders": {
+      "percent": { "type": "int", "format": "decimalPattern" }
+    }
+  },
+  "result_danger_message": "Daily limit reached. Seek shade now.",
+  "result_medUsed_label": "MED Used",
+  "result_spfStatus_label": "SPF Status",
+  "result_recommendedAction_label": "Recommended Action",
+  "result_action_reapplySunscreen": "Reapply sunscreen (SPF {spf})",
+  "@result_action_reapplySunscreen": {
+    "placeholders": {
+      "spf": { "type": "int" }
+    }
+  },
+  "result_action_seekShade": "Move to shade immediately",
+  "result_action_allGood": "Enjoy the sun responsibly",
+  "result_scanAgain_button": "Scan Again",
+
+  "notification_uvPeak_body": "UV levels are peaking — great time to reapply sunscreen and keep your skin protected.",
+  "notification_spfExpired_body": "Your sunscreen''s protection has likely faded. A quick reapplication keeps you covered.",
+  "notification_threshold80_body": "You''ve reached 80% of your safe UV limit for today. Consider moving to shade soon.",
+  "notification_dailyDone_body": "You''ve hit your UV dose for today. Your skin will thank you for staying protected!",
+  "notification_morningReminder_body": "Starting your day? Don''t forget sunscreen — UV can be present even on cloudy days.",
+
+  "error_network": "No internet connection. Please check your settings.",
+  "error_camera": "Camera access is required to scan the sticker.",
+  "error_location": "Location access helps us fetch local UV data.",
+  "error_server": "Our server is temporarily unavailable. Please try again.",
+  "error_unknown": "Something went wrong. Please restart the app.",
+  "error_retry_button": "Retry",
+  "error_settings_button": "Open Settings",
+
+  "onboarding_splash_title": "Know Your\nSkin.",
+  "onboarding_splash_body": "Your photochromic sticker measures UV in real time.\nWe turn colour into care.",
+  "onboarding_spf_label": "Sunscreen SPF",
+  "onboarding_spf_noneLabel": "None",
+
+  "home_title": "Today''s UV",
+  "home_noData_hint2": "Scan your sticker to begin tracking.",
+  "home_status_safe": "You''re well protected today.",
+  "home_status_caution": "You''ve used over half your daily dose.",
+  "home_status_warning": "You''re approaching your daily limit.",
+  "home_status_danger": "Daily limit reached. Seek shade now.",
+  "home_pullToRefresh": "Pull to refresh",
+
+  "scan_capturing": "Capturing…",
+  "scan_analysing": "Analysing sticker…",
+  "scan_torch_on": "Torch on",
+  "scan_torch_off": "Torch off",
+  "scan_back": "Back",
+
+  "result_safe_full": "You''re well protected today. ✨",
+  "result_caution_full": "Making good progress. {minutes} min of safe time left.",
+  "@result_caution_full": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "result_warning_full": "You''ve used {percent}% of your daily limit.",
+  "@result_warning_full": {
+    "placeholders": { "percent": { "type": "String" } }
+  },
+  "result_danger_full": "Daily limit reached.\nTime to recharge in the shade.",
+  "result_exceeded_full": "Approaching your daily limit.\nStep into shade soon.",
+  "result_uvReading_label": "UV Reading",
+  "result_timeLeft_label": "min left",
+  "result_action_shade": "Move to shade immediately.",
+  "result_action_partial": "Consider moving to partial shade.",
+  "result_action_reapply": "Reapply sunscreen to maintain protection.",
+  "result_action_caution": "Enjoy the sun — reapply sunscreen soon.",
+  "result_action_good": "Enjoy the sun responsibly.",
+  "result_spfFaded": "SPF protection has faded — reapply sunscreen",
+  "result_spfCurrent": "Current SPF effectiveness: ",
+  "result_backHome": "Back to Dashboard",
+
+  "premium_title": "UV Dosimeter Premium",
+  "premium_body": "Unlock advanced skin analysis, exposure history, and personalised UV reports.",
+  "premium_upgrade_button": "Upgrade to Premium",
+  "premium_later_button": "Maybe later"
+}
