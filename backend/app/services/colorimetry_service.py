@@ -83,8 +83,10 @@ _MIN_LIGHTNESS = 20.0
 _MIN_CONTOUR_PIXELS = 150
 
 # Minimum mean HSV saturation of the extracted ROI pixels.
-# A genuine sticker has some colour richness; a plain wall/skin patch does not.
-_MIN_ROI_SATURATION = 18
+# Lowered to 8 so that lightly-exposed (pale orange) and near-fresh stickers
+# are accepted.  Shape geometry (compactness, fill, aspect) guards against
+# neutral walls/skin that might also have very low saturation.
+_MIN_ROI_SATURATION = 8
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -227,36 +229,44 @@ def _build_sticker_mask(image: np.ndarray) -> np.ndarray:
     """
     Builds a binary mask for potential sticker regions using HSV.
 
-    Two bands are OR-combined:
+    Three bands are OR-combined to cover all UV exposure states:
 
-    Band 1 — Vivid (S ≥ 70, V ≥ 60):
-        Catches clearly saturated patches: any partially or fully exposed
-        photochromic sticker.  The raised S floor (was 60) tightens
-        discrimination against slightly-coloured fabrics and skin edges.
+    Band 1 — Vivid (S ≥ 60, V ≥ 50):
+        Medium-to-heavily exposed sticker (orange, dark orange, brown).
+        Also catches any clearly-saturated coloured object.
 
-    Band 2 — Warm-hue pale (H = 0-30 or 155-179, S = 30-69, V ≥ 110):
-        Catches lightly-exposed or near-fresh stickers that show a pale
-        orange-tan tint.  Critically, the hue restriction excludes:
-        - Blue / green fabrics and backgrounds (H 40-150)
-        - Grey / white neutral surfaces (S < 30)
-        - Pure white paper / walls (S < 30)
-        - Cool-toned skin (usually H 5-20 but S 15-30; excluded by S ≥ 30)
+    Band 2 — Warm pale (H = 0-40 or 155-179, S = 15-59, V ≥ 90):
+        Lightly-exposed sticker with pale orange / peach tint (≈10-30% UV).
+        Hue restriction excludes blue/green backgrounds.
+        S floor lowered from 30 → 15 to catch less-exposed states.
+
+    Band 3 — Near-fresh (H = 0-50, S = 8-14, V ≥ 160):
+        Fresh or minimally exposed sticker with very subtle cream / yellow tint.
+        Very strict brightness floor (V ≥ 160) avoids dark-neutral confounders.
+        Geometric shape scoring is the primary false-positive guard at this level.
+
+    False-positive protection at the mask level relies on hue restriction — only
+    warm (orange/red/yellow) hues are captured.  Final rejection of non-sticker
+    shapes (skin, wall edges, fabric) is handled by the contour scoring step.
 
     Morphological closing fills holes inside the sticker body.
     Opening removes isolated noise specks.
     """
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    # Band 1: clearly saturated — exposed sticker or vivid object.
-    vivid_mask = cv2.inRange(hsv, (0, 70, 60), (179, 255, 255))
+    # Band 1: clearly saturated — medium/heavy UV exposure.
+    vivid_mask = cv2.inRange(hsv, (0, 60, 50), (179, 255, 255))
 
-    # Band 2: warm pale — fresh / lightly-exposed sticker (orange-brown range).
-    # Two sub-ranges because hue wraps around 180: red (155-179) and orange (0-30).
-    warm_low = cv2.inRange(hsv, (0, 30, 110), (30, 69, 255))
-    warm_high = cv2.inRange(hsv, (155, 30, 110), (179, 69, 255))
+    # Band 2: warm pale — light UV exposure (≈10-30%), pale orange/peach tint.
+    warm_low = cv2.inRange(hsv, (0, 15, 90), (40, 59, 255))
+    warm_high = cv2.inRange(hsv, (155, 15, 90), (179, 59, 255))
     warm_pale_mask = cv2.bitwise_or(warm_low, warm_high)
 
+    # Band 3: near-fresh — very subtle cream/yellow tint (≈0-10% UV).
+    fresh_mask = cv2.inRange(hsv, (5, 8, 160), (50, 14, 255))
+
     combined = cv2.bitwise_or(vivid_mask, warm_pale_mask)
+    combined = cv2.bitwise_or(combined, fresh_mask)
 
     close_k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
     combined = cv2.morphologyEx(combined, cv2.MORPH_CLOSE, close_k)
