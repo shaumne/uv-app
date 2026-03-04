@@ -46,28 +46,57 @@ class HomeScreen extends ConsumerWidget {
 
                     // ── Header row ────────────────────────────────────────────
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(l10n.home_title, style: AppTypography.headlineMed),
-                            Text(
-                              _dateLabel(),
-                              style: AppTypography.labelSmall,
-                            ),
-                          ],
+                        // Title + date
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(l10n.home_title,
+                                  style: AppTypography.headlineMed),
+                              Text(
+                                _dateLabel(),
+                                style: AppTypography.labelSmall,
+                              ),
+                            ],
+                          ),
                         ),
+
+                        // UV index badge
                         if (state.isLoadingUv)
                           const ShimmerBox(width: 80, height: 40, radius: 20)
                         else if (state.uvIndex != null)
                           UvIndexBadge(
                             uvIndex: state.uvIndex!.value,
-                            riskCategory: state.uvIndex!.riskCategory,
+                            riskLevel: state.uvIndex!.riskLevel,
                           )
                         else if (state.uvFailure != null)
-                          _ErrorBadge(message: state.uvFailure!.message),
+                          _ErrorBadge(message: l10n.home_uvUnavailable),
+
+                        const SizedBox(width: 8),
+
+                        // Settings button
+                        GestureDetector(
+                          onTap: () => context.go(RouteNames.settings),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.cardSurface,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: AppColors.subtleDivider,
+                                width: 1,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.tune_rounded,
+                              size: 20,
+                              color: AppColors.deepInk,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
 
@@ -155,6 +184,8 @@ class HomeScreen extends ConsumerWidget {
 
 class _ErrorBadge extends StatelessWidget {
   const _ErrorBadge({required this.message});
+
+  /// [message] is a localised string passed from the parent.
   final String message;
 
   @override
@@ -166,7 +197,7 @@ class _ErrorBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        'UV unavailable',
+        message,
         style: AppTypography.labelSmall.copyWith(
           color: AppColors.uvDangerCoral,
         ),

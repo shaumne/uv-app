@@ -117,10 +117,10 @@ class HomeNotifier extends StateNotifier<HomeState> {
             state = state.copyWith(isLoadingUv: false, uvIndex: uvIndex),
       );
     } catch (e) {
-      appLogger.e('[HomeProvider] Location error', error: e);
+      appLogger.w('[HomeProvider] Location unavailable: $e');
       state = state.copyWith(
         isLoadingUv: false,
-        uvFailure: LocationFailure(e.toString()),
+        uvFailure: LocationFailure(_friendlyLocationError(e.toString())),
       );
     }
   }
@@ -134,25 +134,68 @@ class HomeNotifier extends StateNotifier<HomeState> {
     );
   }
 
-  /// Requests location permission and returns the current device position.
+  /// Requests location permission and returns the best available position.
+  ///
+  /// Strategy:
+  /// 1. Check/request permission — fail fast if permanently denied.
+  /// 2. Use last-known position immediately if < 30 minutes old (no GPS wait).
+  /// 3. Fall back to getCurrentPosition with 20-second timeout at lowest
+  ///    accuracy for the fastest possible satellite fix.
   Future<Position> _determinePosition() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
-      throw Exception('Location services are disabled.');
+      throw Exception('location_service_disabled');
     }
+
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      throw Exception('Location permission denied.');
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception('location_permission_denied_forever');
     }
+    if (permission == LocationPermission.denied) {
+      throw Exception('location_permission_denied');
+    }
+
+    // Fast path: last-known position if it is recent (< 30 minutes).
+    try {
+      final last = await Geolocator.getLastKnownPosition();
+      if (last != null) {
+        final age = DateTime.now().difference(last.timestamp);
+        if (age.inMinutes < 30) {
+          appLogger.d(
+            '[HomeProvider] Using last-known position (age=${age.inMinutes}m)',
+          );
+          return last;
+        }
+      }
+    } catch (_) {
+      // getLastKnownPosition can throw on some devices — fall through.
+    }
+
+    // Slow path: fresh GPS fix with generous timeout.
     return Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.low,
-        timeLimit: Duration(seconds: 8),
+        accuracy: LocationAccuracy.lowest,
+        timeLimit: Duration(seconds: 20),
       ),
     );
+  }
+
+  String _friendlyLocationError(String raw) {
+    if (raw.contains('location_service_disabled')) {
+      return 'Location services are off.';
+    }
+    if (raw.contains('denied_forever')) {
+      return 'Location permission denied. Enable in device Settings.';
+    }
+    if (raw.contains('permission_denied')) {
+      return 'Location permission required for UV index.';
+    }
+    if (raw.contains('TimeoutException')) {
+      return 'Location timed out. UV index unavailable.';
+    }
+    return 'Location unavailable.';
   }
 }
 

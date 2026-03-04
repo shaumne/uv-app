@@ -7,7 +7,6 @@ import '../../../../app/router/route_names.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../../onboarding/presentation/providers/skin_profile_provider.dart';
 import '../providers/scan_provider.dart';
 import '../widgets/pulse_overlay_frame.dart';
@@ -19,6 +18,10 @@ import '../widgets/pulse_overlay_frame.dart';
 /// - Edge vignette overlay
 /// - PulseOverlayFrame centred
 /// - Bottom sheet: instruction + torch toggle + capture button
+///
+/// Sticker validation occurs AFTER the photo is taken (server-side).
+/// The capture button is enabled as soon as the camera is ready — no
+/// pre-capture detection loop is run to avoid interference with the shot.
 class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
 
@@ -54,13 +57,13 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     final notifier = ref.read(scanNotifierProvider.notifier);
     final l10n = AppLocalizations.of(context)!;
 
-    // Navigate to result on success
+    // Navigate to result on success; show snackbar on failure.
     ref.listen<ScanState>(scanNotifierProvider, (_, next) {
       if (next.status == ScanStatus.success && next.result != null) {
         context.go(RouteNames.result, extra: next.result);
       }
       if (next.status == ScanStatus.error && next.failure != null) {
-        _showFailureSnackbar(next.failure!);
+        _showFailureSnackbar(next.failure!, l10n, notifier);
       }
     });
 
@@ -69,13 +72,13 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Camera preview ──────────────────────────────────────────────
+          // ── Camera preview ────────────────────────────────────────────────
           _buildCameraPreview(),
 
-          // ── Vignette overlay ────────────────────────────────────────────
+          // ── Vignette overlay ──────────────────────────────────────────────
           const _VignetteOverlay(),
 
-          // ── Camera initialising spinner ─────────────────────────────────
+          // ── Camera initialising spinner ───────────────────────────────────
           if (!scanState.isCameraReady && !scanState.isLoading)
             Center(
               child: Column(
@@ -92,11 +95,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
               ),
             ),
 
-          // ── Pulse frame — only after camera is ready ─────────────────────
+          // ── Pulse alignment frame — visible while idle ────────────────────
           if (scanState.isCameraReady && !scanState.isLoading)
             const Center(child: PulseOverlayFrame()),
 
-          // ── Analysing spinner ───────────────────────────────────────────
+          // ── Analysing spinner ─────────────────────────────────────────────
           if (scanState.isLoading)
             Center(
               child: Column(
@@ -115,7 +118,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
               ),
             ),
 
-          // ── Back button ─────────────────────────────────────────────────
+          // ── Back button ───────────────────────────────────────────────────
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
@@ -126,7 +129,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
             ),
           ),
 
-          // ── Bottom controls ─────────────────────────────────────────────
+          // ── Bottom controls ───────────────────────────────────────────────
           Positioned(
             left: 0,
             right: 0,
@@ -134,7 +137,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
             child: _BottomControls(
               isTorchOn: scanState.isTorchOn,
               isCapturing: scanState.isLoading,
-              isCameraReady: scanState.isCameraReady,
+              canCapture: scanState.canCapture,
               guideHint: l10n.scan_guideOverlay_hint,
               onTorchToggle: notifier.toggleTorch,
               onCapture: () => _capture(notifier),
@@ -168,25 +171,65 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     );
   }
 
-  void _showFailureSnackbar(Failure failure) {
+  void _showFailureSnackbar(
+    Failure failure,
+    AppLocalizations l10n,
+    ScanNotifier notifier,
+  ) {
     if (!mounted) return;
+    // Map backend error code strings to localised messages.
+    // Backend 422 responses contain English detail strings — replace them
+    // with locale-aware copies from ARB files where possible.
+    String _localise(String backendMsg) {
+      final m = backendMsg.toLowerCase();
+      if (m.contains('sticker_not_detected') ||
+          m.contains('not detected') ||
+          m.contains('no sticker')) {
+        return l10n.scan_sticker_notDetected;
+      }
+      if (m.contains('too_small') || m.contains('too small') || m.contains('closer')) {
+        return l10n.scan_sticker_tooSmall;
+      }
+      if (m.contains('too dark') || m.contains('lighting')) {
+        return l10n.scan_sticker_tooDark;
+      }
+      if (m.contains('low_confidence') || m.contains('low confidence')) {
+        return l10n.scan_sticker_notDetected;
+      }
+      return backendMsg; // fallback: show raw message
+    }
+
     final msg = switch (failure) {
-      NetworkFailure() => 'No internet connection.',
+      NetworkFailure() => l10n.error_network,
       CameraFailure() => failure.message,
-      ImageProcessingFailure() => failure.message,
-      ServerFailure() => 'Server error. Please try again.',
-      _ => 'Something went wrong.',
+      ImageProcessingFailure() => _localise(failure.message),
+      ServerFailure() => failure.message.isNotEmpty
+          ? _localise(failure.message)
+          : l10n.error_server,
+      _ => l10n.error_unknown,
     };
+
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
         backgroundColor: AppColors.uvDangerCoral,
         behavior: SnackBarBehavior.floating,
         action: SnackBarAction(
-          label: 'Retry',
+          label: l10n.error_retry_button,
           textColor: Colors.white,
-          onPressed: () => _capture(ref.read(scanNotifierProvider.notifier)),
+          onPressed: () {
+            notifier.resetAfterError();
+            _capture(notifier);
+          },
         ),
+        onVisible: () {
+          // Auto-reset after 4 s so the capture button becomes tappable again
+          // even if the user dismisses the snackbar without pressing Retry.
+          Future.delayed(const Duration(seconds: 4), () {
+            if (mounted) notifier.resetAfterError();
+          });
+        },
       ),
     );
   }
@@ -212,11 +255,13 @@ class _VignetteOverlay extends StatelessWidget {
   }
 }
 
+// ── Bottom controls ───────────────────────────────────────────────────────────
+
 class _BottomControls extends StatelessWidget {
   const _BottomControls({
     required this.isTorchOn,
     required this.isCapturing,
-    required this.isCameraReady,
+    required this.canCapture,
     required this.guideHint,
     required this.onTorchToggle,
     required this.onCapture,
@@ -224,7 +269,7 @@ class _BottomControls extends StatelessWidget {
 
   final bool isTorchOn;
   final bool isCapturing;
-  final bool isCameraReady;
+  final bool canCapture;
   final String guideHint;
   final VoidCallback onTorchToggle;
   final VoidCallback onCapture;
@@ -244,6 +289,7 @@ class _BottomControls extends StatelessWidget {
           Text(
             guideHint,
             style: AppTypography.bodyMedium.copyWith(color: Colors.white70),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           Row(
@@ -259,22 +305,35 @@ class _BottomControls extends StatelessWidget {
                 onPressed: onTorchToggle,
               ),
 
-              // Capture button — disabled while camera is initialising
+              // Capture button — active when camera is ready
               GestureDetector(
-                onTap: (isCapturing || !isCameraReady) ? null : onCapture,
+                onTap: (isCapturing || !canCapture) ? null : onCapture,
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
+                  duration: const Duration(milliseconds: 250),
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: (isCapturing || !isCameraReady)
-                        ? Colors.white38
-                        : Colors.white,
+                    color: isCapturing
+                        ? Colors.white54
+                        : canCapture
+                            ? Colors.white
+                            : Colors.white24,
                     border: Border.all(
-                      color: Colors.white38,
+                      color: canCapture
+                          ? Colors.white.withValues(alpha: 0.8)
+                          : Colors.white24,
                       width: 4,
                     ),
+                    boxShadow: canCapture
+                        ? [
+                            BoxShadow(
+                              color: Colors.white.withValues(alpha: 0.20),
+                              blurRadius: 16,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                        : null,
                   ),
                   child: isCapturing
                       ? const Padding(
@@ -284,19 +343,11 @@ class _BottomControls extends StatelessWidget {
                             color: Colors.white,
                           ),
                         )
-                      : !isCameraReady
-                          ? const Padding(
-                              padding: EdgeInsets.all(22),
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white54,
-                              ),
-                            )
-                          : null,
+                      : null,
                 ),
               ),
 
-              // Placeholder — symmetric spacing
+              // Symmetric spacing placeholder
               const SizedBox(width: 48),
             ],
           ),

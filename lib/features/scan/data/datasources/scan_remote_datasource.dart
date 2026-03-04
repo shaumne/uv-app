@@ -6,6 +6,23 @@ import '../../../result/domain/entities/uv_analysis_result.dart';
 import '../models/scan_request_model.dart';
 import '../../domain/entities/scan_request.dart';
 
+/// Result of a lightweight sticker presence check.
+class StickerDetectionResult {
+  const StickerDetectionResult({
+    required this.detected,
+    required this.confidence,
+    this.reason,
+  });
+
+  final bool detected;
+
+  /// 0.0 – 1.0 detection confidence.
+  final double confidence;
+
+  /// Rejection reason code when [detected] is false.
+  final String? reason;
+}
+
 abstract interface class ScanRemoteDatasource {
   Future<UvAnalysisResult> analyzeSticker({
     required ScanRequest request,
@@ -13,6 +30,9 @@ abstract interface class ScanRemoteDatasource {
     required double uvIndex,
     required double hoursSinceApplication,
   });
+
+  /// Lightweight check — returns detection result without full MED analysis.
+  Future<StickerDetectionResult> detectSticker({required String imagePath});
 }
 
 class ScanRemoteDatasourceImpl implements ScanRemoteDatasource {
@@ -69,6 +89,56 @@ class ScanRemoteDatasourceImpl implements ScanRemoteDatasource {
       throw ServerException(
         message: detail.toString().isNotEmpty ? detail.toString() : 'Analysis failed.',
         statusCode: e.response?.statusCode,
+      );
+    }
+  }
+
+  @override
+  Future<StickerDetectionResult> detectSticker({
+    required String imagePath,
+  }) async {
+    FormData formData;
+    try {
+      formData = FormData.fromMap({
+        ApiConstants.fieldImage: await MultipartFile.fromFile(imagePath),
+      });
+    } catch (e) {
+      appLogger.w('[ScanDatasource] detect: failed to read frame: $e');
+      return const StickerDetectionResult(
+        detected: false, confidence: 0.0, reason: 'read_error',
+      );
+    }
+
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        ApiConstants.detectSticker,
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+          sendTimeout: const Duration(seconds: 4),
+          receiveTimeout: const Duration(seconds: 5),
+        ),
+      );
+      final data = response.data;
+      if (data == null) {
+        return const StickerDetectionResult(
+          detected: false, confidence: 0.0, reason: 'empty_response',
+        );
+      }
+      return StickerDetectionResult(
+        detected: data['detected'] as bool? ?? false,
+        confidence: (data['confidence'] as num?)?.toDouble() ?? 0.0,
+        reason: data['reason'] as String?,
+      );
+    } on DioException catch (e) {
+      appLogger.d('[ScanDatasource] detect DioException: ${e.type}');
+      return const StickerDetectionResult(
+        detected: false, confidence: 0.0, reason: 'network_error',
+      );
+    } catch (e) {
+      appLogger.d('[ScanDatasource] detect error: $e');
+      return const StickerDetectionResult(
+        detected: false, confidence: 0.0, reason: 'unexpected_error',
       );
     }
   }

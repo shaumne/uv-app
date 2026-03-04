@@ -90,6 +90,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get home_uvRisk_extreme => 'Extreme';
 
   @override
+  String home_remaining_minutes(int count) {
+    return '$count min remaining';
+  }
+
+  @override
+  String get home_daily_limit_reached => 'Daily limit reached';
+
+  @override
   String get home_dailyDose_label => 'Daily Dose Used';
 
   @override
@@ -306,6 +314,86 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get result_backHome => 'Back to Dashboard';
+
+  @override
+  String get home_uvUnavailable => 'UV unavailable';
+
+  @override
+  String get scan_sticker_detected => 'Sticker detected';
+
+  @override
+  String get scan_sticker_notDetected => 'No sticker detected';
+
+  @override
+  String get scan_sticker_checking => 'Scanning for sticker…';
+
+  @override
+  String get scan_sticker_tooSmall => 'Move closer to the sticker';
+
+  @override
+  String get scan_sticker_tooDark => 'Move to better lighting';
+
+  @override
+  String get scan_sticker_captureDisabledHint =>
+      'Align the sticker in the frame to capture';
+
+  @override
+  String get settings_title => 'Settings';
+
+  @override
+  String get settings_section_language => 'Language';
+
+  @override
+  String get settings_language_en => 'English';
+
+  @override
+  String get settings_language_tr => 'Türkçe';
+
+  @override
+  String get settings_language_ja => '日本語';
+
+  @override
+  String get settings_section_profile => 'Skin Profile';
+
+  @override
+  String get settings_section_app => 'About';
+
+  @override
+  String get settings_fitzpatrick_label => 'Skin Type';
+
+  @override
+  String get settings_spf_label => 'Sunscreen SPF';
+
+  @override
+  String get settings_spf_none => 'None';
+
+  @override
+  String get settings_save_button => 'Save Changes';
+
+  @override
+  String get settings_saved_message => 'Profile updated successfully.';
+
+  @override
+  String get settings_version_label => 'Version';
+
+  @override
+  String get settings_support_label => 'Support';
+
+  @override
+  String get settings_support_email => 'support@uvdosimetry.com';
+
+  @override
+  String get settings_reset_label => 'Reset Onboarding';
+
+  @override
+  String get settings_reset_confirm =>
+      'This will clear your skin profile. Continue?';
+
+  @override
+  String get settings_reset_button => 'Reset';
+
+  @override
+  String get settings_cancel_button => 'Cancel';
 
   @override
   String get premium_title => 'UV Dosimeter Premium';

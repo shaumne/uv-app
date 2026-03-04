@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .api.v1.endpoints.analyze import router as analyze_router
+from .api.v1.endpoints.detect import router as detect_router
 from .core.config import settings
 from .core.logging import configure_logging, logger
 
@@ -35,6 +36,7 @@ def create_app() -> FastAPI:
 
     # ── Routers ──────────────────────────────────────────────────────────────
     app.include_router(analyze_router, prefix="/api/v1")
+    app.include_router(detect_router, prefix="/api/v1")
 
     # ── Global exception handler ──────────────────────────────────────────────
     @app.exception_handler(Exception)

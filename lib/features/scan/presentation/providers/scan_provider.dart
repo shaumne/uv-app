@@ -56,6 +56,10 @@ class ScanState {
   /// True once [CameraController.initialize()] has completed successfully.
   final bool isCameraReady;
 
+  /// Capture is allowed when the camera is ready and not already in a
+  /// capture/analysis cycle.
+  bool get canCapture => isCameraReady && !isLoading;
+
   bool get isLoading =>
       status == ScanStatus.capturing || status == ScanStatus.analysing;
 
@@ -111,7 +115,6 @@ class ScanNotifier extends StateNotifier<ScanState> {
         enableAudio: false,
       );
       await _cameraController!.initialize();
-      // Mark camera as ready so the UI enables the capture button.
       state = state.copyWith(isCameraReady: true);
       return _cameraController;
     } on CameraException catch (e) {
@@ -121,6 +124,13 @@ class ScanNotifier extends StateNotifier<ScanState> {
         failure: CameraFailure(e.description ?? 'Camera initialisation failed.'),
       );
       return null;
+    }
+  }
+
+  /// Resets status to [idle] after an error so the user can capture again.
+  void resetAfterError() {
+    if (state.status == ScanStatus.error) {
+      state = state.copyWith(status: ScanStatus.idle, failure: null);
     }
   }
 

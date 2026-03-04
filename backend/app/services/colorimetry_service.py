@@ -4,14 +4,29 @@ Colorimetry service — OpenCV + scikit-learn UV sticker colour extraction.
 Pipeline (matches ComputerVision_Colorimetry skill specification):
 1. Decode raw image bytes into a NumPy/BGR array.
 2. Apply LAB-space Grey-World white balance correction.
-3. Isolate the sticker patch via HSV masking + largest-contour detection.
-4. Extract dominant colour with scikit-learn K-Means (k=3, highest-count cluster).
+3. Isolate the sticker patch via HSV masking + multi-factor contour scoring.
+4. Extract dominant colour from ONLY the pixels inside the sticker contour
+   (not the full bounding rectangle) using scikit-learn K-Means (k=4).
+   Select the cluster with highest chroma×count weight — the photochromic
+   indicator dye — instead of blindly taking the largest cluster.
 5. Map dominant colour to UV% via LAB L* perceptual interpolation (scipy).
 6. Return hex string + uv_percent.
 
 Required packages: opencv-python-headless, scikit-learn, scipy, numpy
+
+Design decisions / key changes from prior version:
+- pale_mask (S=25-59) was replaced with a hue-restricted warm-orange band to
+  stop false-positive fires on walls, paper, skin and other neutral surfaces.
+- K-Means now receives only masked contour pixels (not the entire bounding
+  rectangle), eliminating background dilution that caused medium doses to
+  appear lighter and skew the UV% toward 0.
+- Cluster selection switches from "largest count" to "highest chroma×count"
+  so the photochromic dye cluster wins over background white/grey clusters.
+- All internal functions now crash-safe: minimum pixel guards prevent sklearn
+  from throwing when the candidate ROI has fewer than k×10 pixels.
 """
 import logging
+import math
 
 import cv2
 import numpy as np
@@ -21,26 +36,58 @@ from sklearn.cluster import KMeans
 logger = logging.getLogger(__name__)
 
 # ── UV calibration curve ───────────────────────────────────────────────────────
-# Maps LAB L* values (0-100 perceptual scale) to cumulative UV MED percentage.
-# Derived from photochromic dye lab measurements.
-# Update after each physical sticker batch calibration (see reference.md).
+# Maps LAB L* values (CIE 0-100 scale) to cumulative UV MED percentage.
+#
+# Calibration data: photochromic orange-brown dye; update after each batch.
+# Midpoints at L*=68 and L*=38 added for better discrimination in the
+# medium (25-50%) and medium-high (50-75%) exposure ranges.
 _CALIBRATION: list[tuple[float, float]] = [
-    (90.0,   0.0),   # fresh / unexposed  — very light
-    (75.0,  10.0),
-    (60.0,  25.0),
-    (45.0,  50.0),
-    (30.0,  75.0),
-    (15.0, 100.0),   # fully exposed      — very dark
+    (92.0,   0.0),   # fresh / unexposed  — near-white
+    (78.0,  10.0),   # very light tint
+    (68.0,  25.0),   # pale orange
+    (55.0,  50.0),   # orange
+    (42.0,  70.0),   # dark orange  ← midpoint added
+    (30.0,  85.0),   # orange-brown
+    (18.0, 100.0),   # very dark brown / fully exposed
 ]
 _L_VALS, _UV_VALS = zip(*_CALIBRATION)
 _UV_CURVE = interp1d(_L_VALS, _UV_VALS, kind="linear", fill_value="extrapolate")
 
-# Minimum sticker contour area in pixels² before fallback is triggered.
-_MIN_STICKER_AREA_PX2 = 500
+# ── Sticker detection thresholds ───────────────────────────────────────────────
+
+# Minimum sticker contour area in pixels².
+_MIN_STICKER_AREA_PX2 = 1_200
+
+# Sticker must occupy 1 %–30 % of total image area.
+_MAX_STICKER_AREA_FRACTION = 0.30
+_MIN_STICKER_AREA_FRACTION = 0.010
+
+# Aspect ratio w/h.  Stickers are square or circular.
+_MIN_ASPECT_RATIO = 0.55
+_MAX_ASPECT_RATIO = 1.82
+
+# Compactness = 4π × A / P².  Raised to 0.38 to reject elongated blobs.
+_MIN_COMPACTNESS = 0.38
+
+# Fill ratio: contour area / bounding-rect area.  Raised to 0.55.
+_MIN_FILL_RATIO = 0.55
+
+# Confidence score required for "detected" verdict.  Raised to 0.55.
+_DETECTION_CONFIDENCE_THRESHOLD = 0.55
 
 # Minimum mean LAB L* value; below this the image is too dark to analyse.
 _MIN_LIGHTNESS = 20.0
 
+# Minimum pixel count inside a contour required for K-Means.
+# Prevents sklearn from crashing when a very small contour passes scoring.
+_MIN_CONTOUR_PIXELS = 150
+
+# Minimum mean HSV saturation of the extracted ROI pixels.
+# A genuine sticker has some colour richness; a plain wall/skin patch does not.
+_MIN_ROI_SATURATION = 18
+
+
+# ── Public API ────────────────────────────────────────────────────────────────
 
 def extract_sticker_data(
     image_bytes: bytes,
@@ -52,23 +99,22 @@ def extract_sticker_data(
     Args:
         image_bytes: Raw JPEG/PNG bytes from the mobile camera.
         ambient_lux: Ambient light sensor reading in lux (used for
-                     low-light detection and logging; white balance uses
-                     the LAB grey-world algorithm independently).
+                     low-light detection; white balance uses the LAB
+                     grey-world algorithm independently).
 
     Returns:
         Tuple of (hex_color: str, uv_percent: float).
         hex_color is in '#RRGGBB' format.
-        uv_percent is in range 0.0 – 100.0+ (values > 100 indicate over-exposure).
+        uv_percent is in range 0.0–100.0 (clamped).
 
     Raises:
-        ValueError: If the image cannot be decoded, is too dark,
-                    or the sticker region cannot be isolated.
+        ValueError: Descriptive code string for client feedback.
     """
     image = _decode_image(image_bytes)
     _check_lightness(image)
     balanced = _white_balance_lab(image)
-    roi = _isolate_sticker(balanced)
-    hex_color = _dominant_hex_kmeans(roi)
+    roi_pixels = _isolate_sticker_pixels(balanced)
+    hex_color = _dominant_hex_kmeans(roi_pixels)
     uv_percent = _hex_to_uv_percent(hex_color)
 
     logger.info(
@@ -80,9 +126,42 @@ def extract_sticker_data(
     return hex_color, uv_percent
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Step 1 — Image decode
-# ──────────────────────────────────────────────────────────────────────────────
+def detect_sticker_presence(image_bytes: bytes) -> dict:
+    """
+    Lightweight sticker presence check — no MED calculation, no K-Means.
+
+    Returns:
+        dict with keys:
+            detected (bool): True if a valid sticker patch was found.
+            confidence (float): 0.0–1.0 detection confidence score.
+            reason (str | None): Human-readable rejection reason if not detected.
+
+    Never raises — all exceptions are caught and returned as not-detected.
+    """
+    try:
+        image = _decode_image(image_bytes)
+        _check_lightness(image)
+        balanced = _white_balance_lab(image)
+        contour, confidence = _find_best_sticker_contour(balanced)
+        if contour is None:
+            return {"detected": False, "confidence": 0.0, "reason": "sticker_not_detected"}
+        if confidence < _DETECTION_CONFIDENCE_THRESHOLD:
+            return {
+                "detected": False,
+                "confidence": round(confidence, 2),
+                "reason": "low_confidence",
+            }
+        return {"detected": True, "confidence": round(confidence, 2), "reason": None}
+    except ValueError as exc:
+        reason = str(exc)
+        logger.debug("[Detect] Not detected: %s", reason)
+        return {"detected": False, "confidence": 0.0, "reason": reason}
+    except Exception as exc:
+        logger.warning("[Detect] Unexpected error: %s", exc)
+        return {"detected": False, "confidence": 0.0, "reason": "processing_error"}
+
+
+# ── Step 1 — Image decode ─────────────────────────────────────────────────────
 
 def _decode_image(image_bytes: bytes) -> np.ndarray:
     """Decodes raw bytes into a BGR NumPy array (OpenCV native format)."""
@@ -93,9 +172,7 @@ def _decode_image(image_bytes: bytes) -> np.ndarray:
     return image
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Step 1b — Darkness check
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Step 1b — Darkness check ──────────────────────────────────────────────────
 
 def _check_lightness(image: np.ndarray) -> None:
     """
@@ -117,109 +194,303 @@ def _check_lightness(image: np.ndarray) -> None:
         )
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Step 2 — White balance (LAB Grey-World)
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Step 2 — White balance (LAB Grey-World) ───────────────────────────────────
 
 def _white_balance_lab(image: np.ndarray) -> np.ndarray:
     """
     Applies Grey-World white balance in CIE LAB colour space.
 
-    LAB is used instead of RGB because it separates luminance (L*)
-    from chromaticity (a*, b*), giving more accurate colour neutralisation
-    under mixed ambient lighting.
+    LAB separates luminance (L*) from chromaticity (a*, b*), giving more
+    accurate colour neutralisation under mixed ambient lighting.
 
-    The a* and b* channels are shifted so their average equals the
-    grey-point (128 in OpenCV's 0-255 LAB encoding), weighted by luminance.
+    The a* and b* channels are shifted so their average equals the grey-point
+    (128 in OpenCV's 0-255 LAB encoding), weighted by luminance.
 
-    Afterward a mild bilateral filter removes noise while preserving edges.
+    A mild bilateral filter removes noise while preserving sticker edges.
     """
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB).astype(np.float64)
 
     avg_a = np.average(lab[:, :, 1])
     avg_b = np.average(lab[:, :, 2])
 
-    # Shift a* and b* channels toward grey, weighted by L*
     lab[:, :, 1] -= (avg_a - 128) * (lab[:, :, 0] / 255.0) * 1.1
     lab[:, :, 2] -= (avg_b - 128) * (lab[:, :, 0] / 255.0) * 1.1
 
     lab = np.clip(lab, 0, 255).astype(np.uint8)
     balanced = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
-
-    # Mild bilateral filter — smooths noise, preserves sticker edges
     return cv2.bilateralFilter(balanced, d=9, sigmaColor=75, sigmaSpace=75)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Step 3 — Sticker isolation
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Step 3 — Sticker isolation ────────────────────────────────────────────────
 
-def _isolate_sticker(image: np.ndarray) -> np.ndarray:
+def _build_sticker_mask(image: np.ndarray) -> np.ndarray:
     """
-    Isolates the sticker patch using HSV saturation masking + contour detection.
+    Builds a binary mask for potential sticker regions using HSV.
 
-    The sticker always has higher saturation than surrounding skin.
-    Thresholds: (H: 0-179, S: 60-255, V: 60-255) — any vivid colour.
-    The largest contour's bounding rect is used as the ROI.
+    Two bands are OR-combined:
 
-    Raises:
-        ValueError: 'sticker_not_detected' if no contour is found.
-        ValueError: 'sticker_too_small' if largest contour area < 500 px².
+    Band 1 — Vivid (S ≥ 70, V ≥ 60):
+        Catches clearly saturated patches: any partially or fully exposed
+        photochromic sticker.  The raised S floor (was 60) tightens
+        discrimination against slightly-coloured fabrics and skin edges.
+
+    Band 2 — Warm-hue pale (H = 0-30 or 155-179, S = 30-69, V ≥ 110):
+        Catches lightly-exposed or near-fresh stickers that show a pale
+        orange-tan tint.  Critically, the hue restriction excludes:
+        - Blue / green fabrics and backgrounds (H 40-150)
+        - Grey / white neutral surfaces (S < 30)
+        - Pure white paper / walls (S < 30)
+        - Cool-toned skin (usually H 5-20 but S 15-30; excluded by S ≥ 30)
+
+    Morphological closing fills holes inside the sticker body.
+    Opening removes isolated noise specks.
     """
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, (0, 60, 60), (179, 255, 255))
 
-    # Morphological cleanup
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    # Band 1: clearly saturated — exposed sticker or vivid object.
+    vivid_mask = cv2.inRange(hsv, (0, 70, 60), (179, 255, 255))
 
+    # Band 2: warm pale — fresh / lightly-exposed sticker (orange-brown range).
+    # Two sub-ranges because hue wraps around 180: red (155-179) and orange (0-30).
+    warm_low = cv2.inRange(hsv, (0, 30, 110), (30, 69, 255))
+    warm_high = cv2.inRange(hsv, (155, 30, 110), (179, 69, 255))
+    warm_pale_mask = cv2.bitwise_or(warm_low, warm_high)
+
+    combined = cv2.bitwise_or(vivid_mask, warm_pale_mask)
+
+    close_k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
+    combined = cv2.morphologyEx(combined, cv2.MORPH_CLOSE, close_k)
+
+    open_k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    combined = cv2.morphologyEx(combined, cv2.MORPH_OPEN, open_k)
+
+    return combined
+
+
+def _score_contour(contour: np.ndarray, image_area: int) -> float:
+    """
+    Computes a 0.0–1.0 sticker likelihood score for a contour.
+
+    Hard constraints (any failure → 0.0):
+    - Absolute area ≥ [_MIN_STICKER_AREA_PX2]
+    - Relative area within [_MIN_STICKER_AREA_FRACTION, _MAX_STICKER_AREA_FRACTION]
+    - Aspect ratio (w/h) within [_MIN_ASPECT_RATIO, _MAX_ASPECT_RATIO]
+    - Compactness ≥ [_MIN_COMPACTNESS]
+    - Fill ratio (contour_area / bbox_area) ≥ [_MIN_FILL_RATIO]
+
+    Soft scoring (weighted sum → final score):
+    - area_score:    peaks at 3–15 % of image area
+    - aspect_score:  peaks at 1.0 (perfect square/circle)
+    - compact_score: peaks at 1.0 (circle)
+    - fill_score:    peaks at 1.0 (full bbox coverage)
+    """
+    area = cv2.contourArea(contour)
+    if area < _MIN_STICKER_AREA_PX2:
+        return 0.0
+
+    rel_area = area / image_area
+    if rel_area < _MIN_STICKER_AREA_FRACTION or rel_area > _MAX_STICKER_AREA_FRACTION:
+        return 0.0
+
+    x, y, w, h = cv2.boundingRect(contour)
+    if h == 0:
+        return 0.0
+
+    aspect = w / h
+    if aspect < _MIN_ASPECT_RATIO or aspect > _MAX_ASPECT_RATIO:
+        return 0.0
+
+    perimeter = cv2.arcLength(contour, closed=True)
+    if perimeter < 1:
+        return 0.0
+
+    compactness = (4.0 * math.pi * area) / (perimeter ** 2)
+    if compactness < _MIN_COMPACTNESS:
+        return 0.0
+
+    bbox_area = w * h
+    fill_ratio = area / bbox_area if bbox_area > 0 else 0.0
+    if fill_ratio < _MIN_FILL_RATIO:
+        return 0.0
+
+    # ── Soft scores ───────────────────────────────────────────────────────────
+    area_score = max(0.0, 1.0 - abs(math.log10(max(rel_area, 1e-6)) + 1.3) / 1.8)
+    area_score = min(1.0, area_score)
+    aspect_score = max(0.0, 1.0 - abs(aspect - 1.0) * 1.1)
+    compact_score = min(compactness, 1.0)
+    fill_score = min(fill_ratio, 1.0)
+
+    score = (
+        0.20 * area_score
+        + 0.20 * aspect_score
+        + 0.40 * compact_score
+        + 0.20 * fill_score
+    )
+    return round(score, 3)
+
+
+def _find_best_sticker_contour(
+    image: np.ndarray,
+) -> tuple[np.ndarray | None, float]:
+    """
+    Finds the contour that best matches the expected sticker shape.
+
+    Returns:
+        (best_contour, confidence) — contour is None if nothing qualifies.
+    """
+    mask = _build_sticker_mask(image)
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if not contours:
+        return None, 0.0
+
+    image_area = image.shape[0] * image.shape[1]
+    best_contour = None
+    best_score = 0.0
+
+    for cnt in contours:
+        score = _score_contour(cnt, image_area)
+        if score > best_score:
+            best_score = score
+            best_contour = cnt
+
+    return best_contour, best_score
+
+
+def _isolate_sticker_pixels(image: np.ndarray) -> np.ndarray:
+    """
+    Locates the sticker contour and returns ONLY the pixels inside it.
+
+    Unlike the previous approach that returned the bounding-rectangle ROI,
+    this function draws a filled mask from the winning contour and extracts
+    the exact sticker pixels.  Background pixels in the corners of the
+    bounding box are excluded entirely, preventing them from diluting the
+    K-Means colour estimation.
+
+    Returns:
+        1-D array of shape (N, 3) — BGR pixel values inside the contour.
+
+    Raises:
+        ValueError: Specific error codes used by the endpoint for user feedback.
+    """
+    best_contour, confidence = _find_best_sticker_contour(image)
+
+    if best_contour is None:
         raise ValueError("sticker_not_detected")
 
-    sticker_contour = max(contours, key=cv2.contourArea)
-    area = cv2.contourArea(sticker_contour)
-    logger.debug("[Colorimetry] Largest contour area: %.0f px²", area)
+    image_area = image.shape[0] * image.shape[1]
+    area = cv2.contourArea(best_contour)
 
     if area < _MIN_STICKER_AREA_PX2:
         raise ValueError(
-            f"sticker_too_small (area={area:.0f} px² < {_MIN_STICKER_AREA_PX2} px²)"
+            f"sticker_too_small (area={area:.0f} px² < {_MIN_STICKER_AREA_PX2} px²). "
+            "Hold the camera closer to the sticker."
         )
 
-    x, y, w, h = cv2.boundingRect(sticker_contour)
-    roi = image[y : y + h, x : x + w]
-    return roi
+    rel_area = area / image_area
+    if rel_area > _MAX_STICKER_AREA_FRACTION:
+        raise ValueError(
+            "sticker_too_close (occupies more than 30% of frame). "
+            "Move the camera slightly further from the sticker."
+        )
+
+    if confidence < _DETECTION_CONFIDENCE_THRESHOLD:
+        raise ValueError(
+            f"sticker_low_confidence (score={confidence:.2f}). "
+            "Ensure the sticker is centred and well-lit."
+        )
+
+    # Draw a filled contour mask and extract interior pixels.
+    contour_mask = np.zeros(image.shape[:2], dtype=np.uint8)
+    cv2.drawContours(contour_mask, [best_contour], -1, 255, thickness=cv2.FILLED)
+    pixels = image[contour_mask > 0]  # shape: (N, 3) BGR
+
+    if len(pixels) < _MIN_CONTOUR_PIXELS:
+        raise ValueError(
+            f"sticker_too_small (only {len(pixels)} pixels inside contour). "
+            "Hold the camera closer to the sticker."
+        )
+
+    # Reject plain neutral surfaces that passed the shape test.
+    hsv_pixels = cv2.cvtColor(
+        pixels.reshape(1, -1, 3), cv2.COLOR_BGR2HSV
+    )[0]  # shape: (N, 3) HSV
+    mean_saturation = float(np.mean(hsv_pixels[:, 1]))
+    if mean_saturation < _MIN_ROI_SATURATION:
+        logger.debug(
+            "[Colorimetry] ROI rejected: mean saturation=%.1f < %d (neutral surface)",
+            mean_saturation,
+            _MIN_ROI_SATURATION,
+        )
+        raise ValueError("sticker_not_detected")
+
+    logger.debug(
+        "[Colorimetry] Sticker isolated: %.0f px² (%.1f%% of frame), "
+        "confidence=%.2f, mean_sat=%.1f",
+        area, rel_area * 100, confidence, mean_saturation,
+    )
+    return pixels
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Step 4 — Dominant colour (K-Means k=3)
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Step 4 — Dominant colour (K-Means k=4, chroma-weighted selection) ─────────
 
-def _dominant_hex_kmeans(roi: np.ndarray, k: int = 3) -> str:
+def _dominant_hex_kmeans(pixels: np.ndarray, k: int = 4) -> str:
     """
-    Extracts the dominant colour from the ROI using scikit-learn K-Means (k=3).
+    Extracts the photochromic indicator colour from sticker pixels.
 
-    k=3 accounts for the sticker's photochromic gradient — the cluster with
-    the highest pixel count represents the majority-exposed colour zone.
+    Key improvements over naive "largest cluster" approach:
+
+    1. Works directly on contour-masked pixels (no background leakage).
+    2. Uses k=4 clusters for finer colour granularity.
+    3. Selects the cluster with the highest chroma×count weight:
+       - Pure white/grey background clusters (L* > 90 or chroma < 5) are
+         downweighted so the coloured dye cluster wins.
+       - Very dark clusters (L* < 10) are excluded as shadow artefacts.
+    4. Falls back to the largest cluster if all are achromatic (fresh sticker
+       with no UV exposure yet — near-white palette is expected).
 
     Returns:
-        Hex string '#RRGGBB' of the dominant cluster centroid.
+        Hex string '#RRGGBB' of the dominant indicator cluster centroid.
     """
-    pixels = roi.reshape(-1, 3).astype(np.float32)
+    pixel_float = pixels.astype(np.float32)
 
-    kmeans = KMeans(n_clusters=k, n_init=10, random_state=42)
-    kmeans.fit(pixels)
+    # Clamp k so sklearn never receives fewer samples than clusters.
+    actual_k = min(k, max(2, len(pixel_float) // 10))
 
+    kmeans = KMeans(n_clusters=actual_k, n_init=10, random_state=42)
+    kmeans.fit(pixel_float)
     counts = np.bincount(kmeans.labels_)
-    dominant_bgr = kmeans.cluster_centers_[np.argmax(counts)].astype(int)
+
+    # Evaluate each cluster in LAB space.
+    best_score = -1.0
+    best_idx = int(np.argmax(counts))  # fallback: largest
+
+    for i, center in enumerate(kmeans.cluster_centers_):
+        bgr_px = np.uint8([[[int(center[0]), int(center[1]), int(center[2])]]])
+        lab = cv2.cvtColor(bgr_px, cv2.COLOR_BGR2LAB)[0][0]
+
+        l_star = float(lab[0]) / 2.55          # 0-100 perceptual scale
+        a_star = float(lab[1]) - 128.0
+        b_star = float(lab[2]) - 128.0
+        chroma = math.sqrt(a_star ** 2 + b_star ** 2)
+
+        # Exclude clusters that are clearly background artefacts.
+        if l_star > 92 or l_star < 8:
+            continue
+
+        # Score = pixel count × chroma boost.
+        # This selects the most coloured region while still preferring
+        # larger clusters when chroma values are comparable.
+        cluster_score = counts[i] * (1.0 + chroma / 25.0)
+        if cluster_score > best_score:
+            best_score = cluster_score
+            best_idx = i
+
+    dominant_bgr = kmeans.cluster_centers_[best_idx].astype(int)
     b, g, r = int(dominant_bgr[0]), int(dominant_bgr[1]), int(dominant_bgr[2])
     return f"#{r:02X}{g:02X}{b:02X}"
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Step 5 — UV% mapping via LAB L* interpolation
-# ──────────────────────────────────────────────────────────────────────────────
+# ── Step 5 — UV% mapping via LAB L* interpolation ────────────────────────────
 
 def _hex_to_uv_percent(hex_color: str) -> float:
     """
@@ -240,13 +511,11 @@ def _hex_to_uv_percent(hex_color: str) -> float:
         raise ValueError(f"Malformed hex colour: {hex_color}")
 
     r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-
     bgr_pixel = np.uint8([[[b, g, r]]])
     lab_pixel = cv2.cvtColor(bgr_pixel, cv2.COLOR_BGR2LAB)[0][0]
 
-    # OpenCV L* range is 0-255; divide by 2.55 for standard 0-100 scale
     l_star = float(lab_pixel[0]) / 2.55
-
     uv_pct = float(np.clip(_UV_CURVE(l_star), 0.0, 100.0))
+
     logger.debug("[Colorimetry] L*=%.1f → UV%%=%.1f", l_star, uv_pct)
     return round(uv_pct, 1)

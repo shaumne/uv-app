@@ -9,6 +9,7 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/scan/presentation/screens/scan_screen.dart';
 import '../../features/result/presentation/screens/result_screen.dart';
 import '../../features/result/domain/entities/uv_analysis_result.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 
 /// Provider that exposes the router — allows GoRouter to listen to
 /// Riverpod state for auth/onboarding redirects.
@@ -63,6 +64,11 @@ final appRouter = GoRouter(
         final result = state.extra as UvAnalysisResult;
         return _fadeSlide(ResultScreen(result: result), state);
       },
+    ),
+    GoRoute(
+      path: RouteNames.settings,
+      pageBuilder: (context, state) =>
+          _fadeSlide(const SettingsScreen(), state),
     ),
   ],
   errorBuilder: (context, state) => Scaffold(

@@ -10,12 +10,16 @@ abstract interface class UvIndexRemoteDatasource {
   });
 }
 
-/// Fetches UV index from currentuvindex.com (no API key required).
+/// Fetches UV index from Open-Meteo (free, no API key required).
+///
+/// Endpoint: https://api.open-meteo.com/v1/forecast
+/// Returns hourly `uv_index` forecast for the current day.
+/// We pick the value for the current hour as the real-time reading.
 class UvIndexRemoteDatasourceImpl implements UvIndexRemoteDatasource {
   const UvIndexRemoteDatasourceImpl(this._dio);
   final Dio _dio;
 
-  static const _baseUrl = 'https://currentuvindex.com/api/v1';
+  static const _baseUrl = 'https://api.open-meteo.com/v1/forecast';
 
   @override
   Future<UvIndexModel> fetchUvIndex({
@@ -23,13 +27,22 @@ class UvIndexRemoteDatasourceImpl implements UvIndexRemoteDatasource {
     required double longitude,
   }) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
-        '$_baseUrl/uvi',
-        queryParameters: {'lat': latitude, 'lng': longitude},
-        options: Options(
-          receiveTimeout: const Duration(seconds: 10),
-          sendTimeout: const Duration(seconds: 5),
-        ),
+      // Use a dedicated Dio instance with the Open-Meteo base URL so this
+      // call bypasses the app's internal FastAPI base URL entirely.
+      final openMeteoDio = Dio(BaseOptions(
+        baseUrl: _baseUrl,
+        connectTimeout: const Duration(seconds: 8),
+        receiveTimeout: const Duration(seconds: 12),
+      ));
+      final response = await openMeteoDio.get<Map<String, dynamic>>(
+        '',
+        queryParameters: {
+          'latitude': latitude,
+          'longitude': longitude,
+          'hourly': 'uv_index',
+          'forecast_days': 1,
+          'timezone': 'auto',
+        },
       );
 
       final data = response.data;
@@ -39,8 +52,8 @@ class UvIndexRemoteDatasourceImpl implements UvIndexRemoteDatasource {
         );
       }
 
-      appLogger.d('[UvIndex] lat=$latitude lng=$longitude data=$data');
-      return UvIndexModel.fromJson(data, latitude, longitude);
+      appLogger.d('[UvIndex] lat=$latitude lng=$longitude');
+      return UvIndexModel.fromOpenMeteoJson(data, latitude, longitude);
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout) {

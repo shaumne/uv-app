@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
 
 /// Pulsing scan guide frame — from Premium_Cosmeceutical_UI_Designer skill.
 ///
-/// A breathing opacity animation on the corner-mark frame signals
-/// "live / ready to capture" to the user without intrusive text.
+/// Displays four L-shaped corner marks that form the sticker alignment guide.
+/// The frame pulses continuously with a soft fade animation while waiting.
 class PulseOverlayFrame extends StatefulWidget {
   const PulseOverlayFrame({super.key});
 
@@ -24,7 +23,7 @@ class _PulseOverlayFrameState extends State<PulseOverlayFrame>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
-    _opacity = Tween<double>(begin: 0.4, end: 1.0).animate(
+    _opacity = Tween<double>(begin: 0.35, end: 1.0).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
     );
   }
@@ -51,25 +50,34 @@ class _ScanFrameCorners extends StatelessWidget {
   static const _size = 220.0;
   static const _cornerLength = 28.0;
   static const _strokeWidth = 3.0;
-  static const _color = Colors.white;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: _size,
       height: _size,
-      child: CustomPaint(painter: _CornerPainter()),
+      child: CustomPaint(
+        painter: _CornerPainter(
+          color: Colors.white,
+          strokeWidth: _strokeWidth,
+        ),
+      ),
     );
   }
 }
 
 class _CornerPainter extends CustomPainter {
+  const _CornerPainter({required this.color, required this.strokeWidth});
+
+  final Color color;
+  final double strokeWidth;
+
   @override
   void paint(Canvas canvas, Size size) {
     const len = _ScanFrameCorners._cornerLength;
     final paint = Paint()
-      ..color = _ScanFrameCorners._color
-      ..strokeWidth = _ScanFrameCorners._strokeWidth
+      ..color = color
+      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
@@ -92,5 +100,6 @@ class _CornerPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_CornerPainter _) => false;
+  bool shouldRepaint(_CornerPainter old) =>
+      old.color != color || old.strokeWidth != strokeWidth;
 }

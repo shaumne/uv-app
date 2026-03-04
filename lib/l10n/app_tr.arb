@@ -29,6 +29,14 @@
   "home_uvRisk_high": "Yüksek",
   "home_uvRisk_veryHigh": "Çok Yüksek",
   "home_uvRisk_extreme": "Aşırı",
+
+  "home_remaining_minutes": "{count} dk kaldı",
+  "@home_remaining_minutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "home_daily_limit_reached": "Günlük limit doldu",
   "home_dailyDose_label": "Günlük Kullanılan Doz",
   "home_safeTimeRemaining_label": "Kalan güvenli süre",
   "home_safeTimeRemaining_value": "{minutes} dk",
@@ -123,6 +131,35 @@
   "result_spfFaded": "SPF koruması azalmış — güneş kremini yenileyin",
   "result_spfCurrent": "Mevcut SPF etkinliği: ",
   "result_backHome": "Panele Dön",
+
+  "home_uvUnavailable": "UV verisi yok",
+
+  "scan_sticker_detected": "Sticker algılandı",
+  "scan_sticker_notDetected": "Sticker bulunamadı",
+  "scan_sticker_checking": "Sticker taranıyor…",
+  "scan_sticker_tooSmall": "Kamerayı sticker'a yaklaştırın",
+  "scan_sticker_tooDark": "Daha iyi aydınlatmaya gidin",
+  "scan_sticker_captureDisabledHint": "Çekim için sticker'ı çerçeveye hizalayın",
+
+  "settings_title": "Ayarlar",
+  "settings_section_language": "Dil",
+  "settings_language_en": "English",
+  "settings_language_tr": "Türkçe",
+  "settings_language_ja": "日本語",
+  "settings_section_profile": "Cilt Profili",
+  "settings_section_app": "Uygulama Hakkında",
+  "settings_fitzpatrick_label": "Cilt Tipi",
+  "settings_spf_label": "Güneş Kremi SPF",
+  "settings_spf_none": "Yok",
+  "settings_save_button": "Değişiklikleri Kaydet",
+  "settings_saved_message": "Profil başarıyla güncellendi.",
+  "settings_version_label": "Sürüm",
+  "settings_support_label": "Destek",
+  "settings_support_email": "support@uvdosimetry.com",
+  "settings_reset_label": "Başlangıcı Sıfırla",
+  "settings_reset_confirm": "Bu işlem cilt profilinizi siler. Devam edilsin mi?",
+  "settings_reset_button": "Sıfırla",
+  "settings_cancel_button": "İptal",
 
   "premium_title": "UV Dozimetre Premium",
   "premium_body": "Gelişmiş cilt analizi, maruziyet geçmişi ve kişisel UV raporlarının kilidini açın.",

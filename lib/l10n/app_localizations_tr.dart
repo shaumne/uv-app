@@ -94,6 +94,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get home_uvRisk_extreme => 'Aşırı';
 
   @override
+  String home_remaining_minutes(int count) {
+    return '$count dk kaldı';
+  }
+
+  @override
+  String get home_daily_limit_reached => 'Günlük limit doldu';
+
+  @override
   String get home_dailyDose_label => 'Günlük Kullanılan Doz';
 
   @override
@@ -316,6 +324,86 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get result_backHome => 'Panele Dön';
+
+  @override
+  String get home_uvUnavailable => 'UV verisi yok';
+
+  @override
+  String get scan_sticker_detected => 'Sticker algılandı';
+
+  @override
+  String get scan_sticker_notDetected => 'Sticker bulunamadı';
+
+  @override
+  String get scan_sticker_checking => 'Sticker taranıyor…';
+
+  @override
+  String get scan_sticker_tooSmall => 'Kamerayı sticker\'a yaklaştırın';
+
+  @override
+  String get scan_sticker_tooDark => 'Daha iyi aydınlatmaya gidin';
+
+  @override
+  String get scan_sticker_captureDisabledHint =>
+      'Çekim için sticker\'ı çerçeveye hizalayın';
+
+  @override
+  String get settings_title => 'Ayarlar';
+
+  @override
+  String get settings_section_language => 'Dil';
+
+  @override
+  String get settings_language_en => 'English';
+
+  @override
+  String get settings_language_tr => 'Türkçe';
+
+  @override
+  String get settings_language_ja => '日本語';
+
+  @override
+  String get settings_section_profile => 'Cilt Profili';
+
+  @override
+  String get settings_section_app => 'Uygulama Hakkında';
+
+  @override
+  String get settings_fitzpatrick_label => 'Cilt Tipi';
+
+  @override
+  String get settings_spf_label => 'Güneş Kremi SPF';
+
+  @override
+  String get settings_spf_none => 'Yok';
+
+  @override
+  String get settings_save_button => 'Değişiklikleri Kaydet';
+
+  @override
+  String get settings_saved_message => 'Profil başarıyla güncellendi.';
+
+  @override
+  String get settings_version_label => 'Sürüm';
+
+  @override
+  String get settings_support_label => 'Destek';
+
+  @override
+  String get settings_support_email => 'support@uvdosimetry.com';
+
+  @override
+  String get settings_reset_label => 'Başlangıcı Sıfırla';
+
+  @override
+  String get settings_reset_confirm =>
+      'Bu işlem cilt profilinizi siler. Devam edilsin mi?';
+
+  @override
+  String get settings_reset_button => 'Sıfırla';
+
+  @override
+  String get settings_cancel_button => 'İptal';
 
   @override
   String get premium_title => 'UV Dozimetre Premium';

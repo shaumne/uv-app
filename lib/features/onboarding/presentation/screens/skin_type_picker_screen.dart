@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../app/router/route_names.dart';
@@ -15,22 +16,23 @@ import '../widgets/spf_slider_widget.dart';
 class SkinTypePickerScreen extends ConsumerWidget {
   const SkinTypePickerScreen({super.key});
 
-  // Skin type metadata — labels from Cultural_Localization_Expert skill
-  static const _types = [
-    (type: 1, label: 'Type I — Very Fair', desc: 'Always burns, never tans'),
-    (type: 2, label: 'Type II — Fair', desc: 'Usually burns, sometimes tans'),
-    (type: 3, label: 'Type III — Medium', desc: 'Sometimes burns, always tans'),
-    (type: 4, label: 'Type IV — Olive', desc: 'Rarely burns, always tans'),
-    (type: 5, label: 'Type V — Brown', desc: 'Very rarely burns'),
-    (type: 6, label: 'Type VI — Deep', desc: 'Never burns'),
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(onboardingNotifierProvider);
     final notifier = ref.read(onboardingNotifierProvider.notifier);
 
-    // Show error snackbar when save fails
+    // Skin type data built from l10n keys.
+    final types = [
+      (type: 1, label: l10n.onboarding_fitzpatrickType1_label, desc: l10n.onboarding_fitzpatrickType1_desc),
+      (type: 2, label: l10n.onboarding_fitzpatrickType2_label, desc: l10n.onboarding_fitzpatrickType2_desc),
+      (type: 3, label: l10n.onboarding_fitzpatrickType3_label, desc: l10n.onboarding_fitzpatrickType3_desc),
+      (type: 4, label: l10n.onboarding_fitzpatrickType4_label, desc: l10n.onboarding_fitzpatrickType4_desc),
+      (type: 5, label: l10n.onboarding_fitzpatrickType5_label, desc: l10n.onboarding_fitzpatrickType5_desc),
+      (type: 6, label: l10n.onboarding_fitzpatrickType6_label, desc: l10n.onboarding_fitzpatrickType6_desc),
+    ];
+
+    // Show error snackbar when save fails.
     ref.listen<OnboardingState>(onboardingNotifierProvider, (prev, next) {
       if (next.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -46,7 +48,7 @@ class SkinTypePickerScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.clinicalWhite,
       appBar: AppBar(
-        title: const Text('Your Skin Profile'),
+        title: Text(l10n.onboarding_welcome_title),
         leading: context.canPop()
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new, size: 18),
@@ -63,18 +65,18 @@ class SkinTypePickerScreen extends ConsumerWidget {
                 delegate: SliverChildListDelegate([
                   const SizedBox(height: 24),
                   Text(
-                    'Which skin tone best describes you?',
+                    l10n.onboarding_fitzpatrick_question,
                     style: AppTypography.headlineMed,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'This helps us calculate your personal UV limit.',
+                    l10n.onboarding_welcome_subtitle,
                     style: AppTypography.bodyMedium,
                   ),
                   const SizedBox(height: 24),
 
                   // Fitzpatrick cards
-                  ..._types.map((t) => FitzpatrickCard(
+                  ...types.map((t) => FitzpatrickCard(
                         type: t.type,
                         label: t.label,
                         description: t.desc,
@@ -119,7 +121,7 @@ class SkinTypePickerScreen extends ConsumerWidget {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Start Protecting My Skin'),
+                          : Text(l10n.onboarding_start_button),
                     ),
                   ),
                   const SizedBox(height: 48),

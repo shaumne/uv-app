@@ -29,6 +29,14 @@
   "home_uvRisk_high": "高い",
   "home_uvRisk_veryHigh": "非常に高い",
   "home_uvRisk_extreme": "極めて高い",
+
+  "home_remaining_minutes": "残り{count}分",
+  "@home_remaining_minutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "home_daily_limit_reached": "本日の上限に達しました",
   "home_dailyDose_label": "本日の紫外線量",
   "home_safeTimeRemaining_label": "美白を守れる残り時間",
   "home_safeTimeRemaining_value": "{minutes}分",
@@ -123,6 +131,35 @@
   "result_spfFaded": "日焼け止めの効果が薄れています。塗り直してハリとうるおいを守りましょう💕",
   "result_spfCurrent": "現在のSPF効果: ",
   "result_backHome": "ダッシュボードに戻る",
+
+  "home_uvUnavailable": "UV情報なし",
+
+  "scan_sticker_detected": "ステッカー検出済み",
+  "scan_sticker_notDetected": "ステッカーが見つかりません",
+  "scan_sticker_checking": "ステッカーをスキャン中…",
+  "scan_sticker_tooSmall": "カメラをステッカーに近づけてください",
+  "scan_sticker_tooDark": "より明るい場所に移動してください",
+  "scan_sticker_captureDisabledHint": "撮影するにはフレーム内にステッカーを合わせてください",
+
+  "settings_title": "設定",
+  "settings_section_language": "言語",
+  "settings_language_en": "English",
+  "settings_language_tr": "Türkçe",
+  "settings_language_ja": "日本語",
+  "settings_section_profile": "肌プロフィール",
+  "settings_section_app": "アプリについて",
+  "settings_fitzpatrick_label": "肌タイプ",
+  "settings_spf_label": "日焼け止めSPF",
+  "settings_spf_none": "なし",
+  "settings_save_button": "変更を保存",
+  "settings_saved_message": "プロフィールが更新されました。",
+  "settings_version_label": "バージョン",
+  "settings_support_label": "サポート",
+  "settings_support_email": "support@uvdosimetry.com",
+  "settings_reset_label": "初期設定にリセット",
+  "settings_reset_confirm": "肌プロフィールが削除されます。よろしいですか？",
+  "settings_reset_button": "リセット",
+  "settings_cancel_button": "キャンセル",
 
   "premium_title": "UVドシメーター プレミアム",
   "premium_body": "高度な肌分析、日焼け履歴、パーソナライズされたUVレポートをご利用いただけます。",

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 
-/// Pill chip showing safe sun exposure time remaining (skill spec).
+/// Pill chip showing safe sun exposure time remaining.
+///
+/// Uses [AppLocalizations] for all displayed text — no hardcoded strings.
 class RemainingTimeChip extends StatelessWidget {
   const RemainingTimeChip({
     required this.minutes,
@@ -21,9 +24,10 @@ class RemainingTimeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final label = minutes <= 0
-        ? 'Daily limit reached'
-        : '$minutes min remaining';
+        ? l10n.home_daily_limit_reached
+        : l10n.home_remaining_minutes(minutes);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),

@@ -256,6 +256,18 @@ abstract class AppLocalizations {
   /// **'Extreme'**
   String get home_uvRisk_extreme;
 
+  /// No description provided for @home_remaining_minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min remaining'**
+  String home_remaining_minutes(int count);
+
+  /// No description provided for @home_daily_limit_reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily limit reached'**
+  String get home_daily_limit_reached;
+
   /// No description provided for @home_dailyDose_label.
   ///
   /// In en, this message translates to:
@@ -633,6 +645,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to Dashboard'**
   String get result_backHome;
+
+  /// No description provided for @home_uvUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'UV unavailable'**
+  String get home_uvUnavailable;
+
+  /// No description provided for @scan_sticker_detected.
+  ///
+  /// In en, this message translates to:
+  /// **'Sticker detected'**
+  String get scan_sticker_detected;
+
+  /// No description provided for @scan_sticker_notDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'No sticker detected'**
+  String get scan_sticker_notDetected;
+
+  /// No description provided for @scan_sticker_checking.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning for sticker…'**
+  String get scan_sticker_checking;
+
+  /// No description provided for @scan_sticker_tooSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Move closer to the sticker'**
+  String get scan_sticker_tooSmall;
+
+  /// No description provided for @scan_sticker_tooDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to better lighting'**
+  String get scan_sticker_tooDark;
+
+  /// No description provided for @scan_sticker_captureDisabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Align the sticker in the frame to capture'**
+  String get scan_sticker_captureDisabledHint;
+
+  /// No description provided for @settings_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings_title;
+
+  /// No description provided for @settings_section_language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settings_section_language;
+
+  /// No description provided for @settings_language_en.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get settings_language_en;
+
+  /// No description provided for @settings_language_tr.
+  ///
+  /// In en, this message translates to:
+  /// **'Türkçe'**
+  String get settings_language_tr;
+
+  /// No description provided for @settings_language_ja.
+  ///
+  /// In en, this message translates to:
+  /// **'日本語'**
+  String get settings_language_ja;
+
+  /// No description provided for @settings_section_profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Skin Profile'**
+  String get settings_section_profile;
+
+  /// No description provided for @settings_section_app.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settings_section_app;
+
+  /// No description provided for @settings_fitzpatrick_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Skin Type'**
+  String get settings_fitzpatrick_label;
+
+  /// No description provided for @settings_spf_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunscreen SPF'**
+  String get settings_spf_label;
+
+  /// No description provided for @settings_spf_none.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get settings_spf_none;
+
+  /// No description provided for @settings_save_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get settings_save_button;
+
+  /// No description provided for @settings_saved_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated successfully.'**
+  String get settings_saved_message;
+
+  /// No description provided for @settings_version_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get settings_version_label;
+
+  /// No description provided for @settings_support_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get settings_support_label;
+
+  /// No description provided for @settings_support_email.
+  ///
+  /// In en, this message translates to:
+  /// **'support@uvdosimetry.com'**
+  String get settings_support_email;
+
+  /// No description provided for @settings_reset_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Onboarding'**
+  String get settings_reset_label;
+
+  /// No description provided for @settings_reset_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This will clear your skin profile. Continue?'**
+  String get settings_reset_confirm;
+
+  /// No description provided for @settings_reset_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get settings_reset_button;
+
+  /// No description provided for @settings_cancel_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get settings_cancel_button;
 
   /// No description provided for @premium_title.
   ///

@@ -9,5 +9,6 @@ class RouteNames {
   static const String home = '/home';
   static const String scan = '/scan';
   static const String result = '/result';
+  static const String settings = '/settings';
   static const String premiumUpsell = '/premium';
 }

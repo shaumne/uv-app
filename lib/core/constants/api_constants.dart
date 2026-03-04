@@ -4,6 +4,7 @@ class ApiConstants {
 
   // ── FastAPI backend ───────────────────────────────────────────────────────
   static const String analyzeSticker = '/analyze';
+  static const String detectSticker = '/detect';
 
   // ── UV Index external API (Open-Meteo / OpenUV) ───────────────────────────
   static const String uvIndex = '/uvi';

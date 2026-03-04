@@ -88,6 +88,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get home_uvRisk_extreme => '極めて高い';
 
   @override
+  String home_remaining_minutes(int count) {
+    return '残り$count分';
+  }
+
+  @override
+  String get home_daily_limit_reached => '本日の上限に達しました';
+
+  @override
   String get home_dailyDose_label => '本日の紫外線量';
 
   @override
@@ -299,6 +307,84 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get result_backHome => 'ダッシュボードに戻る';
+
+  @override
+  String get home_uvUnavailable => 'UV情報なし';
+
+  @override
+  String get scan_sticker_detected => 'ステッカー検出済み';
+
+  @override
+  String get scan_sticker_notDetected => 'ステッカーが見つかりません';
+
+  @override
+  String get scan_sticker_checking => 'ステッカーをスキャン中…';
+
+  @override
+  String get scan_sticker_tooSmall => 'カメラをステッカーに近づけてください';
+
+  @override
+  String get scan_sticker_tooDark => 'より明るい場所に移動してください';
+
+  @override
+  String get scan_sticker_captureDisabledHint => '撮影するにはフレーム内にステッカーを合わせてください';
+
+  @override
+  String get settings_title => '設定';
+
+  @override
+  String get settings_section_language => '言語';
+
+  @override
+  String get settings_language_en => 'English';
+
+  @override
+  String get settings_language_tr => 'Türkçe';
+
+  @override
+  String get settings_language_ja => '日本語';
+
+  @override
+  String get settings_section_profile => '肌プロフィール';
+
+  @override
+  String get settings_section_app => 'アプリについて';
+
+  @override
+  String get settings_fitzpatrick_label => '肌タイプ';
+
+  @override
+  String get settings_spf_label => '日焼け止めSPF';
+
+  @override
+  String get settings_spf_none => 'なし';
+
+  @override
+  String get settings_save_button => '変更を保存';
+
+  @override
+  String get settings_saved_message => 'プロフィールが更新されました。';
+
+  @override
+  String get settings_version_label => 'バージョン';
+
+  @override
+  String get settings_support_label => 'サポート';
+
+  @override
+  String get settings_support_email => 'support@uvdosimetry.com';
+
+  @override
+  String get settings_reset_label => '初期設定にリセット';
+
+  @override
+  String get settings_reset_confirm => '肌プロフィールが削除されます。よろしいですか？';
+
+  @override
+  String get settings_reset_button => 'リセット';
+
+  @override
+  String get settings_cancel_button => 'キャンセル';
 
   @override
   String get premium_title => 'UVドシメーター プレミアム';

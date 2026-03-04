@@ -29,6 +29,14 @@
   "home_uvRisk_high": "High",
   "home_uvRisk_veryHigh": "Very High",
   "home_uvRisk_extreme": "Extreme",
+
+  "home_remaining_minutes": "{count} min remaining",
+  "@home_remaining_minutes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "home_daily_limit_reached": "Daily limit reached",
   "home_dailyDose_label": "Daily Dose Used",
   "home_safeTimeRemaining_label": "Safe time remaining",
   "home_safeTimeRemaining_value": "{minutes} min",
@@ -123,6 +131,35 @@
   "result_spfFaded": "SPF protection has faded — reapply sunscreen",
   "result_spfCurrent": "Current SPF effectiveness: ",
   "result_backHome": "Back to Dashboard",
+
+  "home_uvUnavailable": "UV unavailable",
+
+  "scan_sticker_detected": "Sticker detected",
+  "scan_sticker_notDetected": "No sticker detected",
+  "scan_sticker_checking": "Scanning for sticker…",
+  "scan_sticker_tooSmall": "Move closer to the sticker",
+  "scan_sticker_tooDark": "Move to better lighting",
+  "scan_sticker_captureDisabledHint": "Align the sticker in the frame to capture",
+
+  "settings_title": "Settings",
+  "settings_section_language": "Language",
+  "settings_language_en": "English",
+  "settings_language_tr": "Türkçe",
+  "settings_language_ja": "日本語",
+  "settings_section_profile": "Skin Profile",
+  "settings_section_app": "About",
+  "settings_fitzpatrick_label": "Skin Type",
+  "settings_spf_label": "Sunscreen SPF",
+  "settings_spf_none": "None",
+  "settings_save_button": "Save Changes",
+  "settings_saved_message": "Profile updated successfully.",
+  "settings_version_label": "Version",
+  "settings_support_label": "Support",
+  "settings_support_email": "support@uvdosimetry.com",
+  "settings_reset_label": "Reset Onboarding",
+  "settings_reset_confirm": "This will clear your skin profile. Continue?",
+  "settings_reset_button": "Reset",
+  "settings_cancel_button": "Cancel",
 
   "premium_title": "UV Dosimeter Premium",
   "premium_body": "Unlock advanced skin analysis, exposure history, and personalised UV reports.",

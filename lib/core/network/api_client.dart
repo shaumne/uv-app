@@ -60,32 +60,15 @@ class _LoggingInterceptor extends Interceptor {
   }
 }
 
-/// Converts [DioException] into typed app exceptions.
+/// Passes all errors through unchanged so each datasource can classify
+/// them by status code (422 vs 5xx) and exception type individually.
+///
+/// Note: a global interceptor that converts badResponse → ServerException
+/// would strip the [DioException.response] object, preventing datasources
+/// from distinguishing 422 (sticker-not-found) from 500 (server crash).
 class _ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    switch (err.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.receiveTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.connectionError:
-        handler.reject(
-          DioException(
-            requestOptions: err.requestOptions,
-            error: const NetworkException(message: 'Connection timed out.'),
-          ),
-        );
-      case DioExceptionType.badResponse:
-        final code = err.response?.statusCode ?? 0;
-        final body = err.response?.data?.toString() ?? 'Unknown error';
-        handler.reject(
-          DioException(
-            requestOptions: err.requestOptions,
-            error: ServerException(message: body, statusCode: code),
-          ),
-        );
-      default:
-        handler.next(err);
-    }
+    handler.next(err);
   }
 }

@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
 
+/// WHO UV Index risk levels — locale-independent keys.
+enum UvRiskLevel { low, moderate, high, veryHigh, extreme }
+
 /// Represents the real-time UV Index for a geographic location.
 ///
 /// [value] follows the WHO UV Index scale (0–11+).
@@ -17,13 +20,16 @@ class UvIndex extends Equatable {
   final double longitude;
   final DateTime fetchedAt;
 
-  /// Returns a human-readable risk category per WHO classification.
-  String get riskCategory {
-    if (value < 3) return 'Low';
-    if (value < 6) return 'Moderate';
-    if (value < 8) return 'High';
-    if (value < 11) return 'Very High';
-    return 'Extreme';
+  /// Returns an opaque risk level key for lookup in the UI layer.
+  ///
+  /// Domain entities must not contain locale-specific strings.
+  /// Consumers should use [UvRiskLevel] + [AppLocalizations] to display text.
+  UvRiskLevel get riskLevel {
+    if (value < 3) return UvRiskLevel.low;
+    if (value < 6) return UvRiskLevel.moderate;
+    if (value < 8) return UvRiskLevel.high;
+    if (value < 11) return UvRiskLevel.veryHigh;
+    return UvRiskLevel.extreme;
   }
 
   @override
