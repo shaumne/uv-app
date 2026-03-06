@@ -94,6 +94,7 @@
   "onboarding_splash_body": "ステッカーがリアルタイムで紫外線を測定します。\n色を美白ケアに変えましょう。",
   "onboarding_spf_label": "日焼け止めSPF",
   "onboarding_spf_noneLabel": "なし",
+  "onboarding_spf_value": "SPF {value}",
 
   "home_title": "今日のUV",
   "home_noData_hint2": "ステッカーをスキャンして記録を始めましょう。",
@@ -104,6 +105,7 @@
   "home_pullToRefresh": "引っ張って更新",
 
   "scan_capturing": "撮影中…",
+  "scan_sticker_detecting": "ステッカーを検出中…",
   "scan_analysing": "ステッカーを解析中…",
   "scan_cameraStarting": "カメラを起動中…",
   "scan_torch_on": "ライトオン",
@@ -164,5 +166,30 @@
   "premium_title": "UVドシメーター プレミアム",
   "premium_body": "高度な肌分析、日焼け履歴、パーソナライズされたUVレポートをご利用いただけます。",
   "premium_upgrade_button": "プレミアムにアップグレード",
-  "premium_later_button": "あとで"
+  "premium_later_button": "あとで",
+
+  "settings_spfApplied_label": "日焼け止め塗布時刻",
+  "settings_spfApplied_notSet": "未記録",
+  "settings_spfApplied_setNow": "今塗りました",
+  "settings_spfApplied_clear": "記録を消去",
+  "settings_spfApplied_ago": "{hours}時間{minutes}分前",
+  "@settings_spfApplied_ago": {
+    "placeholders": {
+      "hours": { "type": "int" },
+      "minutes": { "type": "int" }
+    }
+  },
+  "settings_spfApplied_justNow": "たった今塗りました",
+  "settings_spfApplied_hint": "日焼け止めの塗布時刻を記録して、SPFの効果低下を正確に計算しましょう。",
+
+  "history_screen_title": "UV履歴",
+  "history_7days_label": "過去7日間",
+  "history_noData_hint": "まだ記録がありません。ステッカーをスキャンして美白ケアの追跡を始めましょう。",
+  "history_day_label": "日",
+  "history_medUsed_label": "使用済みMED",
+  "history_safe_badge": "良好",
+  "history_caution_badge": "注意",
+  "history_warning_badge": "警告",
+  "history_danger_badge": "上限到達",
+  "history_premium_locked": "プレミアムにアップグレードして、7日間の紫外線履歴をご確認ください。"
 }

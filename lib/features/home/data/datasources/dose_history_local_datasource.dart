@@ -9,6 +9,10 @@ abstract interface class DoseHistoryLocalDatasource {
 
   /// Persists updated cumulative dose for today.
   Future<void> saveCumulativeDoseJm2(double doseJm2);
+
+  /// Returns a map of date strings (yyyy-MM-dd) → cumulative dose J/m²
+  /// for the past [days] calendar days (inclusive of today).
+  Future<Map<String, double>> getHistoryForDays(int days);
 }
 
 /// Stores daily dose as JSON keyed by calendar date (yyyy-MM-dd).
@@ -47,6 +51,28 @@ class DoseHistoryLocalDatasourceImpl implements DoseHistoryLocalDatasource {
       await _prefs.setString(_keyDoseHistory, jsonEncode(map));
     } catch (e) {
       throw CacheException(message: 'Failed to save dose history: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, double>> getHistoryForDays(int days) async {
+    try {
+      final raw = _prefs.getString(_keyDoseHistory);
+      final stored = raw != null
+          ? jsonDecode(raw) as Map<String, dynamic>
+          : <String, dynamic>{};
+
+      final result = <String, double>{};
+      final now = DateTime.now();
+      for (int i = days - 1; i >= 0; i--) {
+        final date = now.subtract(Duration(days: i));
+        final key =
+            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+        result[key] = (stored[key] as num?)?.toDouble() ?? 0.0;
+      }
+      return result;
+    } catch (e) {
+      throw CacheException(message: 'Failed to read dose history: $e');
     }
   }
 }

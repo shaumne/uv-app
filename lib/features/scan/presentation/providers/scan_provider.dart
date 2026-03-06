@@ -1,11 +1,17 @@
+import 'dart:convert';
 import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../app/di/providers.dart';
+import '../../../../core/error/exceptions.dart'
+    hide CameraException; // camera package defines its own CameraException
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../home/presentation/providers/home_provider.dart';
+import '../../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../../result/domain/entities/uv_analysis_result.dart';
 import '../../data/datasources/scan_remote_datasource.dart';
 import '../../data/repositories/scan_repository_impl.dart';
@@ -37,7 +43,15 @@ class _ScanDependencies {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
-enum ScanStatus { idle, capturing, analysing, success, error }
+/// Scan pipeline stages — executed sequentially on each capture attempt.
+///
+/// idle      → camera ready, waiting for user tap
+/// capturing → shutter fired, photo being taken
+/// detecting → /detect running on captured photo
+/// analysing → /analyze running (detection passed)
+/// success   → result ready, navigation triggered
+/// error     → pipeline failed at any stage, snackbar shown
+enum ScanStatus { idle, capturing, detecting, analysing, success, error }
 
 class ScanState {
   const ScanState({
@@ -56,12 +70,14 @@ class ScanState {
   /// True once [CameraController.initialize()] has completed successfully.
   final bool isCameraReady;
 
-  /// Capture is allowed when the camera is ready and not already in a
-  /// capture/analysis cycle.
+  /// Capture is allowed when the camera is ready and the pipeline is not busy.
   bool get canCapture => isCameraReady && !isLoading;
 
+  /// True during any stage that blocks the capture button and shows a spinner.
   bool get isLoading =>
-      status == ScanStatus.capturing || status == ScanStatus.analysing;
+      status == ScanStatus.capturing ||
+      status == ScanStatus.detecting ||
+      status == ScanStatus.analysing;
 
   ScanState copyWith({
     ScanStatus? status,
@@ -79,6 +95,18 @@ class ScanState {
       );
 }
 
+/// Handles the full capture → detect → analyse pipeline.
+///
+/// Pipeline (per [captureAndAnalyse] call):
+///   1. [ScanStatus.capturing]  — [CameraController.takePicture]
+///   2. [ScanStatus.detecting]  — POST /detect with the captured image
+///   3. if detected == false    — error state (sticker not found), file deleted
+///   4. [ScanStatus.analysing]  — POST /analyze with the same image
+///   5. [ScanStatus.success]    — result stored, UI navigates away
+///
+/// No background polling loop is used. The camera preview runs passively
+/// until the user taps the shutter button, conserving battery and avoiding
+/// concurrent-capture race conditions.
 class ScanNotifier extends StateNotifier<ScanState> {
   ScanNotifier({
     required _ScanDependencies deps,
@@ -93,7 +121,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
 
   CameraController? _cameraController;
 
-  /// Initialises the rear camera. Returns the controller for the UI preview.
+  /// Initialises the rear camera and returns the controller for the UI preview.
   Future<CameraController?> initCamera() async {
     try {
       final cameras = await availableCameras();
@@ -115,7 +143,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
         enableAudio: false,
       );
       await _cameraController!.initialize();
-      state = state.copyWith(isCameraReady: true);
+      state = state.copyWith(isCameraReady: true, status: ScanStatus.idle);
       return _cameraController;
     } on CameraException catch (e) {
       appLogger.e('[ScanNotifier] Camera init error', error: e);
@@ -127,7 +155,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
     }
   }
 
-  /// Resets status to [idle] after an error so the user can capture again.
+  /// Resets to idle after an error so the user can tap the shutter again.
   void resetAfterError() {
     if (state.status == ScanStatus.error) {
       state = state.copyWith(status: ScanStatus.idle, failure: null);
@@ -143,14 +171,22 @@ class ScanNotifier extends StateNotifier<ScanState> {
     state = state.copyWith(isTorchOn: next);
   }
 
-  /// Captures a photo and sends it to the FastAPI analysis endpoint.
+  /// Full scan pipeline: capture → detect → analyse.
   ///
-  /// Returns [UvAnalysisResult] on success, null on failure.
-  /// Failure is stored in [ScanState.failure] for UI display.
+  /// Steps:
+  ///   1. Takes a photo with the rear camera.
+  ///   2. Sends it to /detect to verify a sticker is present.
+  ///      - Backend is optimistic: only genuinely unusable images are blocked.
+  ///      - Centre-crop fallback is used automatically for low-confidence cases.
+  ///   3. Sends the same photo to /analyze for colour extraction + MED calc.
+  ///
+  /// The captured file is always deleted from disk after use.
   Future<UvAnalysisResult?> captureAndAnalyse({
     required int fitzpatrickType,
     required int spf,
-    double ambientLux = 1000.0,
+    // Default to 500 lux (overcast outdoor) — a conservative but realistic
+    // value used for logging only; white balance runs independently.
+    double ambientLux = 500.0,
     double hoursSinceApplication = 0.0,
   }) async {
     final ctrl = _cameraController;
@@ -162,6 +198,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
       return null;
     }
 
+    // ── Stage 1: Capture ────────────────────────────────────────────────────
     state = state.copyWith(status: ScanStatus.capturing, failure: null);
 
     XFile? photo;
@@ -176,6 +213,67 @@ class ScanNotifier extends StateNotifier<ScanState> {
       return null;
     }
 
+    // ── Stage 2: Detect ─────────────────────────────────────────────────────
+    state = state.copyWith(status: ScanStatus.detecting);
+
+    StickerDetectionResult? detection;
+    try {
+      detection = await _deps.remoteDatasource.detectSticker(
+        imagePath: photo.path,
+      );
+    } on NetworkException catch (e) {
+      appLogger.e('[ScanNotifier] /detect network error', error: e);
+      _deleteFile(photo.path);
+      state = state.copyWith(
+        status: ScanStatus.error,
+        failure: NetworkFailure(e.message),
+      );
+      return null;
+    } on ImageProcessingException catch (e) {
+      appLogger.w('[ScanNotifier] /detect image error: ${e.message}');
+      _deleteFile(photo.path);
+      state = state.copyWith(
+        status: ScanStatus.error,
+        failure: ImageProcessingFailure(e.message),
+      );
+      return null;
+    } catch (e, st) {
+      appLogger.e('[ScanNotifier] /detect unexpected error', error: e, stackTrace: st);
+      _deleteFile(photo.path);
+      state = state.copyWith(
+        status: ScanStatus.error,
+        failure: const ImageProcessingFailure('Detection request failed. Please try again.'),
+      );
+      return null;
+    }
+
+    if (!detection.detected) {
+      // Hard block — image is genuinely unusable (too dark, corrupt).
+      // Backend only returns detected=false for insufficient_lighting and
+      // processing_error; all other cases use the centre-crop fallback.
+      final reason = detection.reason ?? 'sticker_not_detected';
+      appLogger.i('[ScanNotifier] Detection hard-blocked. reason=$reason confidence=${detection.confidence}');
+      _deleteFile(photo.path);
+      state = state.copyWith(
+        status: ScanStatus.error,
+        failure: ImageProcessingFailure(reason),
+      );
+      return null;
+    }
+
+    // Log whether we are using the reliable contour path or the fallback.
+    final isFallback = detection.reason != null &&
+        (detection.reason!.contains('fallback') ||
+         detection.reason!.contains('low_confidence'));
+    if (isFallback) {
+      appLogger.i(
+        '[ScanNotifier] Sticker detected via fallback (confidence=${detection.confidence.toStringAsFixed(2)}, reason=${detection.reason}). Proceeding to /analyze.',
+      );
+    } else {
+      appLogger.d('[ScanNotifier] Sticker detected (confidence=${detection.confidence.toStringAsFixed(2)})');
+    }
+
+    // ── Stage 3: Analyse ────────────────────────────────────────────────────
     state = state.copyWith(status: ScanStatus.analysing);
 
     final request = ScanRequest(
@@ -195,14 +293,11 @@ class ScanNotifier extends StateNotifier<ScanState> {
 
     final either = await AnalyzeSticker(repository)(request);
 
-    // Clean up temp file regardless of result
-    try {
-      await File(photo.path).delete();
-    } catch (_) {}
+    _deleteFile(photo.path);
 
     return either.fold(
       (failure) {
-        appLogger.w('[ScanNotifier] Failure: ${failure.message}');
+        appLogger.w('[ScanNotifier] /analyze failure: ${failure.message}');
         state = state.copyWith(status: ScanStatus.error, failure: failure);
         return null;
       },
@@ -213,6 +308,11 @@ class ScanNotifier extends StateNotifier<ScanState> {
     );
   }
 
+  /// Deletes a temp image file silently — errors are swallowed.
+  void _deleteFile(String path) {
+    try { File(path).deleteSync(); } catch (_) {}
+  }
+
   @override
   void dispose() {
     _cameraController?.dispose();
@@ -220,13 +320,28 @@ class ScanNotifier extends StateNotifier<ScanState> {
   }
 }
 
+/// MED baselines (J/m²) per Fitzpatrick type — mirrors backend MED_TABLE.
+const Map<int, double> _medTable = {
+  1: 200.0, 2: 250.0, 3: 350.0, 4: 500.0, 5: 700.0, 6: 1000.0,
+};
+
 final scanNotifierProvider =
     StateNotifierProvider.autoDispose<ScanNotifier, ScanState>((ref) {
   final homeState = ref.watch(homeNotifierProvider);
   final deps = ref.watch(analyzeStickerUseCaseProvider);
+  final prefs = ref.read(sharedPreferencesProvider);
 
-  // Approximate current dose from home summary fraction × Type II MED baseline
-  final doseJm2 = (homeState.doseSummary?.medUsedFraction ?? 0.0) * 250.0;
+  int fitzpatrickType = 2;
+  try {
+    final raw = prefs.getString('skin_profile');
+    if (raw != null) {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      fitzpatrickType = (map['fitzpatrick_type'] as int?) ?? 2;
+    }
+  } catch (_) {}
+
+  final medBaseline = _medTable[fitzpatrickType.clamp(1, 6)] ?? 250.0;
+  final doseJm2 = (homeState.doseSummary?.medUsedFraction ?? 0.0) * medBaseline;
   final uvIdx = homeState.uvIndex?.value ?? 5.0;
 
   return ScanNotifier(

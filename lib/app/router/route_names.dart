@@ -11,4 +11,5 @@ class RouteNames {
   static const String result = '/result';
   static const String settings = '/settings';
   static const String premiumUpsell = '/premium';
+  static const String history = '/history';
 }

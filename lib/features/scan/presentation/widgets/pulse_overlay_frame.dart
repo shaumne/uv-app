@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 /// Pulsing scan guide frame — from Premium_Cosmeceutical_UI_Designer skill.
 ///
 /// Displays four L-shaped corner marks that form the sticker alignment guide.
-/// The frame pulses continuously with a soft fade animation while waiting.
+/// The frame pulses continuously with a soft fade animation while the camera
+/// preview is idle. It is only visible between [ScanStatus.idle] and the
+/// moment the user taps the shutter, so no detected/undetected colour toggle
+/// is needed.
 class PulseOverlayFrame extends StatefulWidget {
   const PulseOverlayFrame({super.key});
 
@@ -58,7 +61,7 @@ class _ScanFrameCorners extends StatelessWidget {
       height: _size,
       child: CustomPaint(
         painter: _CornerPainter(
-          color: Colors.white,
+          color: Colors.white70,
           strokeWidth: _strokeWidth,
         ),
       ),

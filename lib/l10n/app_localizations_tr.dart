@@ -232,6 +232,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get onboarding_spf_noneLabel => 'Yok';
 
   @override
+  String onboarding_spf_value(int value) {
+    return 'SPF $value';
+  }
+
+  @override
   String get home_title => 'Bugünkü UV';
 
   @override
@@ -255,6 +260,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get scan_capturing => 'Çekiliyor…';
+
+  @override
+  String get scan_sticker_detecting => 'Sticker algılanıyor…';
 
   @override
   String get scan_analysing => 'Sticker analiz ediliyor…';
@@ -417,4 +425,60 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get premium_later_button => 'Belki daha sonra';
+
+  @override
+  String get settings_spfApplied_label => 'Güneş Kremi Uygulaması';
+
+  @override
+  String get settings_spfApplied_notSet => 'Kayıt yok';
+
+  @override
+  String get settings_spfApplied_setNow => 'Şimdi sürdüm';
+
+  @override
+  String get settings_spfApplied_clear => 'Kaydı temizle';
+
+  @override
+  String settings_spfApplied_ago(int hours, int minutes) {
+    return '${hours}s ${minutes}d önce';
+  }
+
+  @override
+  String get settings_spfApplied_justNow => 'Az önce sürdüm';
+
+  @override
+  String get settings_spfApplied_hint =>
+      'SPF koruma azalmasını doğru hesaplamak için güneş kremini ne zaman sürdüğünü kaydet.';
+
+  @override
+  String get history_screen_title => 'UV Geçmişi';
+
+  @override
+  String get history_7days_label => 'Son 7 Gün';
+
+  @override
+  String get history_noData_hint =>
+      'Henüz UV kaydı yok. Takibi başlatmak için sticker\'\'ı tarayın.';
+
+  @override
+  String get history_day_label => 'Gün';
+
+  @override
+  String get history_medUsed_label => 'Kullanılan MED';
+
+  @override
+  String get history_safe_badge => 'Güvenli';
+
+  @override
+  String get history_caution_badge => 'Dikkat';
+
+  @override
+  String get history_warning_badge => 'Uyarı';
+
+  @override
+  String get history_danger_badge => 'Limit Doldu';
+
+  @override
+  String get history_premium_locked =>
+      '7 günlük UV geçmişinizi görmek için Premium\'\'a geçin.';
 }

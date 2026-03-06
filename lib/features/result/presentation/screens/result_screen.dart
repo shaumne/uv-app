@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../core/services/ad_service.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -76,7 +77,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         backgroundColor: Colors.transparent,
         title: Text(AppLocalizations.of(context)!.result_screen_title),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+          icon: PhosphorIcon(PhosphorIconsRegular.caretLeft, size: 18),
           onPressed: () => context.go(RouteNames.home),
         ),
       ),

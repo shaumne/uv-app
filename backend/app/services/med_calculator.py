@@ -232,24 +232,24 @@ def classify_risk(
     med_protected: float,
 ) -> RiskLevel:
     """
-    Maps current UV exposure state to a [RiskLevel] tier.
+    Maps current UV exposure state to a [RiskLevel] tier (Dermatology_Math_Engine skill).
 
-    Thresholds (dose ratio = cumulative / med_protected):
-        EXCEEDED  ≥ 100%  MED crossed
-        DANGER    < 10 min remaining  OR  dose ≥ 85%
-        WARNING   < 30 min remaining  OR  dose ≥ 65%
-        CAUTION   < 60 min remaining  OR  dose ≥ 50%
-        SAFE      all other cases
+    Thresholds (dose_ratio = cumulative_dose_jm2 / med_protected):
+        EXCEEDED  dose_ratio ≥ 1.0   MED already crossed
+        DANGER    minutes_remaining ≤ 0
+        WARNING   minutes_remaining < 10  OR  dose_ratio ≥ 0.85
+        CAUTION   minutes_remaining < 30  OR  dose_ratio ≥ 0.65
+        SAFE      else
     """
     dose_ratio = (cumulative_dose_jm2 / med_protected) if med_protected > 0 else 1.0
 
     if dose_ratio >= 1.0:
         return RiskLevel.EXCEEDED
-    if minutes_remaining <= 0 or dose_ratio >= 0.85:
+    if minutes_remaining <= 0:
         return RiskLevel.DANGER
-    if minutes_remaining < 10 or dose_ratio >= 0.65:
+    if minutes_remaining < 10 or dose_ratio >= 0.85:
         return RiskLevel.WARNING
-    if minutes_remaining < 30 or dose_ratio >= 0.50:
+    if minutes_remaining < 30 or dose_ratio >= 0.65:
         return RiskLevel.CAUTION
     return RiskLevel.SAFE
 

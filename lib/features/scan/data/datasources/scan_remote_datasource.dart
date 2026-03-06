@@ -103,10 +103,8 @@ class ScanRemoteDatasourceImpl implements ScanRemoteDatasource {
         ApiConstants.fieldImage: await MultipartFile.fromFile(imagePath),
       });
     } catch (e) {
-      appLogger.w('[ScanDatasource] detect: failed to read frame: $e');
-      return const StickerDetectionResult(
-        detected: false, confidence: 0.0, reason: 'read_error',
-      );
+      appLogger.w('[ScanDatasource] detect: failed to read image file: $e');
+      throw ImageProcessingException(message: 'Failed to read captured image: $e');
     }
 
     try {
@@ -115,30 +113,50 @@ class ScanRemoteDatasourceImpl implements ScanRemoteDatasource {
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
-          sendTimeout: const Duration(seconds: 4),
-          receiveTimeout: const Duration(seconds: 5),
+          // Image upload + OpenCV processing can take 15–25 s on device.
+          // Use generous timeouts here rather than the global 30 s default
+          // so that the detect step never races the analyse step's timeout.
+          sendTimeout: const Duration(seconds: 20),
+          receiveTimeout: const Duration(seconds: 30),
         ),
       );
       final data = response.data;
       if (data == null) {
-        return const StickerDetectionResult(
-          detected: false, confidence: 0.0, reason: 'empty_response',
-        );
+        throw const ServerException(message: 'Empty response from detect API.');
       }
+      appLogger.d('[ScanDatasource] detect response: $data');
       return StickerDetectionResult(
         detected: data['detected'] as bool? ?? false,
         confidence: (data['confidence'] as num?)?.toDouble() ?? 0.0,
         reason: data['reason'] as String?,
       );
     } on DioException catch (e) {
-      appLogger.d('[ScanDatasource] detect DioException: ${e.type}');
-      return const StickerDetectionResult(
-        detected: false, confidence: 0.0, reason: 'network_error',
-      );
-    } catch (e) {
-      appLogger.d('[ScanDatasource] detect error: $e');
-      return const StickerDetectionResult(
-        detected: false, confidence: 0.0, reason: 'unexpected_error',
+      appLogger.e('[ScanDatasource] detect DioException: ${e.type}', error: e);
+
+      // Network / connectivity failures must bubble up so the caller can show
+      // a "no connection" error — NOT be silenced as "sticker not detected".
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout) {
+        throw NetworkException(
+          message: 'No connection to server. Check your Wi-Fi and that the backend is running.',
+        );
+      }
+      if (e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException(
+          message: 'Server took too long to respond. Check network speed and backend load.',
+        );
+      }
+
+      // 4xx/5xx responses that carry a structured detail message.
+      final body = e.response?.data;
+      final detail = body is Map ? (body['detail'] ?? '').toString() : '';
+      if (e.response?.statusCode == 422) {
+        throw ImageProcessingException(message: detail.isNotEmpty ? detail : 'Detection failed.');
+      }
+      throw ServerException(
+        message: detail.isNotEmpty ? detail : 'Detection request failed.',
+        statusCode: e.response?.statusCode,
       );
     }
   }

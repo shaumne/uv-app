@@ -221,6 +221,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get onboarding_spf_noneLabel => 'なし';
 
   @override
+  String onboarding_spf_value(int value) {
+    return 'SPF $value';
+  }
+
+  @override
   String get home_title => '今日のUV';
 
   @override
@@ -243,6 +248,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get scan_capturing => '撮影中…';
+
+  @override
+  String get scan_sticker_detecting => 'ステッカーを検出中…';
 
   @override
   String get scan_analysing => 'ステッカーを解析中…';
@@ -397,4 +405,57 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get premium_later_button => 'あとで';
+
+  @override
+  String get settings_spfApplied_label => '日焼け止め塗布時刻';
+
+  @override
+  String get settings_spfApplied_notSet => '未記録';
+
+  @override
+  String get settings_spfApplied_setNow => '今塗りました';
+
+  @override
+  String get settings_spfApplied_clear => '記録を消去';
+
+  @override
+  String settings_spfApplied_ago(int hours, int minutes) {
+    return '$hours時間$minutes分前';
+  }
+
+  @override
+  String get settings_spfApplied_justNow => 'たった今塗りました';
+
+  @override
+  String get settings_spfApplied_hint => '日焼け止めの塗布時刻を記録して、SPFの効果低下を正確に計算しましょう。';
+
+  @override
+  String get history_screen_title => 'UV履歴';
+
+  @override
+  String get history_7days_label => '過去7日間';
+
+  @override
+  String get history_noData_hint => 'まだ記録がありません。ステッカーをスキャンして美白ケアの追跡を始めましょう。';
+
+  @override
+  String get history_day_label => '日';
+
+  @override
+  String get history_medUsed_label => '使用済みMED';
+
+  @override
+  String get history_safe_badge => '良好';
+
+  @override
+  String get history_caution_badge => '注意';
+
+  @override
+  String get history_warning_badge => '警告';
+
+  @override
+  String get history_danger_badge => '上限到達';
+
+  @override
+  String get history_premium_locked => 'プレミアムにアップグレードして、7日間の紫外線履歴をご確認ください。';
 }

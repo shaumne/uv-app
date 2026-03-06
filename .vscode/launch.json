@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "UV Dosimeter — EC2 (16.170.120.34)",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=API_BASE_URL=http://16.170.120.34:8000/api/v1"
+      ]
+    },
+    {
+      "name": "UV Dosimeter — Dev (LAN) 10.20.10.154",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=API_BASE_URL=http://10.20.10.154:8000/api/v1"
+      ]
+    },
+    {
+      "name": "UV Dosimeter — Dev (Emulator localhost)",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1"
+      ]
+    },
+    {
+      "name": "UV Dosimeter — Staging",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=API_BASE_URL=https://staging.uvdosimetry.com/api/v1"
+      ]
+    },
+    {
+      "name": "UV Dosimeter — Production",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=API_BASE_URL=https://api.uvdosimetry.com/api/v1"
+      ]
+    }
+  ]
+}

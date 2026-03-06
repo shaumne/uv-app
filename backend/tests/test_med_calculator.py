@@ -131,8 +131,9 @@ class TestClassifyRisk:
     def test_danger_when_minutes_zero(self):
         assert classify_risk(0.0, 400.0, 600.0) == RiskLevel.DANGER
 
-    def test_danger_when_dose_ratio_gte_85pct(self):
-        assert classify_risk(20.0, 430.0, 500.0) == RiskLevel.DANGER
+    def test_warning_when_dose_ratio_gte_85pct(self):
+        """Skill: dose ≥ 85% → WARNING; DANGER only when minutes_remaining ≤ 0."""
+        assert classify_risk(20.0, 430.0, 500.0) == RiskLevel.WARNING
 
     def test_warning_when_minutes_lt_10(self):
         assert classify_risk(8.0, 250.0, 600.0) == RiskLevel.WARNING

@@ -478,6 +478,12 @@ abstract class AppLocalizations {
   /// **'None'**
   String get onboarding_spf_noneLabel;
 
+  /// SPF value label on slider tick marks and badge.
+  ///
+  /// In en, this message translates to:
+  /// **'SPF {value}'**
+  String onboarding_spf_value(int value);
+
   /// No description provided for @home_title.
   ///
   /// In en, this message translates to:
@@ -525,6 +531,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Capturing…'**
   String get scan_capturing;
+
+  /// No description provided for @scan_sticker_detecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Detecting sticker…'**
+  String get scan_sticker_detecting;
 
   /// No description provided for @scan_analysing.
   ///
@@ -825,6 +837,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Maybe later'**
   String get premium_later_button;
+
+  /// No description provided for @settings_spfApplied_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunscreen Applied'**
+  String get settings_spfApplied_label;
+
+  /// No description provided for @settings_spfApplied_notSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not recorded'**
+  String get settings_spfApplied_notSet;
+
+  /// No description provided for @settings_spfApplied_setNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as applied now'**
+  String get settings_spfApplied_setNow;
+
+  /// No description provided for @settings_spfApplied_clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear time'**
+  String get settings_spfApplied_clear;
+
+  /// No description provided for @settings_spfApplied_ago.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m ago'**
+  String settings_spfApplied_ago(int hours, int minutes);
+
+  /// No description provided for @settings_spfApplied_justNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just applied'**
+  String get settings_spfApplied_justNow;
+
+  /// No description provided for @settings_spfApplied_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Track when you last applied sunscreen to calculate protection decay.'**
+  String get settings_spfApplied_hint;
+
+  /// No description provided for @history_screen_title.
+  ///
+  /// In en, this message translates to:
+  /// **'UV History'**
+  String get history_screen_title;
+
+  /// No description provided for @history_7days_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Past 7 Days'**
+  String get history_7days_label;
+
+  /// No description provided for @history_noData_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'No UV exposure recorded yet. Scan your sticker to start tracking.'**
+  String get history_noData_hint;
+
+  /// No description provided for @history_day_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get history_day_label;
+
+  /// No description provided for @history_medUsed_label.
+  ///
+  /// In en, this message translates to:
+  /// **'MED Used'**
+  String get history_medUsed_label;
+
+  /// No description provided for @history_safe_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe'**
+  String get history_safe_badge;
+
+  /// No description provided for @history_caution_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Caution'**
+  String get history_caution_badge;
+
+  /// No description provided for @history_warning_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get history_warning_badge;
+
+  /// No description provided for @history_danger_badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit Reached'**
+  String get history_danger_badge;
+
+  /// No description provided for @history_premium_locked.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to Premium to unlock your full 7-day UV exposure history.'**
+  String get history_premium_locked;
 }
 
 class _AppLocalizationsDelegate

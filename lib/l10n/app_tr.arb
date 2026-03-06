@@ -94,6 +94,7 @@
   "onboarding_splash_body": "Sticker''ınız UV''yi gerçek zamanlı ölçer.\nRengi cilt bakımına dönüştürüyoruz.",
   "onboarding_spf_label": "Güneş Kremi SPF",
   "onboarding_spf_noneLabel": "Yok",
+  "onboarding_spf_value": "SPF {value}",
 
   "home_title": "Bugünkü UV",
   "home_noData_hint2": "Takibi başlatmak için sticker''ı tarayın.",
@@ -104,6 +105,7 @@
   "home_pullToRefresh": "Yenilemek için çekin",
 
   "scan_capturing": "Çekiliyor…",
+  "scan_sticker_detecting": "Sticker algılanıyor…",
   "scan_analysing": "Sticker analiz ediliyor…",
   "scan_cameraStarting": "Kamera başlatılıyor…",
   "scan_torch_on": "Flaş açık",
@@ -164,5 +166,30 @@
   "premium_title": "UV Dozimetre Premium",
   "premium_body": "Gelişmiş cilt analizi, maruziyet geçmişi ve kişisel UV raporlarının kilidini açın.",
   "premium_upgrade_button": "Premium''a Geç",
-  "premium_later_button": "Belki daha sonra"
+  "premium_later_button": "Belki daha sonra",
+
+  "settings_spfApplied_label": "Güneş Kremi Uygulaması",
+  "settings_spfApplied_notSet": "Kayıt yok",
+  "settings_spfApplied_setNow": "Şimdi sürdüm",
+  "settings_spfApplied_clear": "Kaydı temizle",
+  "settings_spfApplied_ago": "{hours}s {minutes}d önce",
+  "@settings_spfApplied_ago": {
+    "placeholders": {
+      "hours": { "type": "int" },
+      "minutes": { "type": "int" }
+    }
+  },
+  "settings_spfApplied_justNow": "Az önce sürdüm",
+  "settings_spfApplied_hint": "SPF koruma azalmasını doğru hesaplamak için güneş kremini ne zaman sürdüğünü kaydet.",
+
+  "history_screen_title": "UV Geçmişi",
+  "history_7days_label": "Son 7 Gün",
+  "history_noData_hint": "Henüz UV kaydı yok. Takibi başlatmak için sticker''ı tarayın.",
+  "history_day_label": "Gün",
+  "history_medUsed_label": "Kullanılan MED",
+  "history_safe_badge": "Güvenli",
+  "history_caution_badge": "Dikkat",
+  "history_warning_badge": "Uyarı",
+  "history_danger_badge": "Limit Doldu",
+  "history_premium_locked": "7 günlük UV geçmişinizi görmek için Premium''a geçin."
 }

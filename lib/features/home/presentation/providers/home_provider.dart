@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../app/di/providers.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../data/datasources/dose_history_local_datasource.dart';
@@ -95,6 +96,11 @@ class HomeNotifier extends StateNotifier<HomeState> {
   final GetDailyDoseSummary getDoseSummary;
   final int fitzpatrickType;
 
+  // Tracks which dose thresholds have already triggered a notification this
+  // session so we don't spam repeated alerts.
+  bool _notified80 = false;
+  bool _notifiedDone = false;
+
   /// Loads UV index and daily dose summary in parallel.
   Future<void> loadAll() async {
     await Future.wait([_loadUvIndex(), _loadDoseSummary()]);
@@ -130,8 +136,34 @@ class HomeNotifier extends StateNotifier<HomeState> {
     final result = await getDoseSummary(fitzpatrickType);
     result.fold(
       (f) => state = state.copyWith(isLoadingDose: false, doseFailure: f),
-      (s) => state = state.copyWith(isLoadingDose: false, doseSummary: s),
+      (s) {
+        state = state.copyWith(isLoadingDose: false, doseSummary: s);
+        _triggerDoseNotificationsIfNeeded(s);
+      },
     );
+  }
+
+  /// Fires dose-threshold notifications when MED fraction crosses 80% or 100%.
+  ///
+  /// Uses session-level booleans to prevent repeated alerts; resets when the
+  /// notifier is disposed (autoDispose) and recreated on next app launch.
+  void _triggerDoseNotificationsIfNeeded(DailyDoseSummary summary) {
+    final fraction = summary.medUsedFraction;
+
+    if (!_notifiedDone && fraction >= 1.0) {
+      _notifiedDone = true;
+      _notified80 = true;
+      NotificationService.showDailyDone(
+        title: 'UV Dosimeter',
+        body: "You've hit your UV dose for today. Your skin will thank you for staying protected!",
+      );
+    } else if (!_notified80 && fraction >= 0.8) {
+      _notified80 = true;
+      NotificationService.showThreshold80(
+        title: 'UV Dosimeter',
+        body: "You've reached 80% of your safe UV limit for today. Consider moving to shade soon.",
+      );
+    }
   }
 
   /// Requests location permission and returns the best available position.

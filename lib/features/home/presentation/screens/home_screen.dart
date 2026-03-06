@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../core/services/ad_service.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -56,7 +58,7 @@ class HomeScreen extends ConsumerWidget {
                               Text(l10n.home_title,
                                   style: AppTypography.headlineMed),
                               Text(
-                                _dateLabel(),
+                                _dateLabel(context),
                                 style: AppTypography.labelSmall,
                               ),
                             ],
@@ -76,6 +78,30 @@ class HomeScreen extends ConsumerWidget {
 
                         const SizedBox(width: 8),
 
+                        // History button
+                        GestureDetector(
+                          onTap: () => context.go(RouteNames.history),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.cardSurface,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: AppColors.subtleDivider,
+                                width: 1,
+                              ),
+                            ),
+                            child: PhosphorIcon(
+                              PhosphorIconsRegular.chartBar,
+                              size: 20,
+                              color: AppColors.deepInk,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 8),
+
                         // Settings button
                         GestureDetector(
                           onTap: () => context.go(RouteNames.settings),
@@ -90,8 +116,8 @@ class HomeScreen extends ConsumerWidget {
                                 width: 1,
                               ),
                             ),
-                            child: const Icon(
-                              Icons.tune_rounded,
+                            child: PhosphorIcon(
+                              PhosphorIconsRegular.sliders,
                               size: 20,
                               color: AppColors.deepInk,
                             ),
@@ -165,13 +191,11 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  String _dateLabel() {
-    final now = DateTime.now();
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${months[now.month - 1]} ${now.day}, ${now.year}';
+  /// Returns a fully localised date string using the current app locale.
+  /// e.g. "Mar 4, 2026" (en), "4 Nis 2026" (tr), "2026年3月4日" (ja)
+  String _dateLabel(BuildContext context) {
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.yMMMd(locale).format(DateTime.now());
   }
 
   String _statusMessage(AppLocalizations l10n, double fraction) {

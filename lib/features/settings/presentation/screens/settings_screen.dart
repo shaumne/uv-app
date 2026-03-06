@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../core/providers/locale_provider.dart';
@@ -91,7 +92,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       appBar: AppBar(
         title: Text(l10n.settings_title),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+          icon: PhosphorIcon(PhosphorIconsRegular.caretLeft, size: 18),
           onPressed: () => context.go(RouteNames.home),
         ),
         actions: [
@@ -130,7 +131,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               color: AppColors.uvSafeGreen.withValues(alpha: 0.12),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle_outline,
+                  PhosphorIcon(PhosphorIconsRegular.checkCircle,
                       size: 18, color: AppColors.uvSafeGreen),
                   const SizedBox(width: 10),
                   Text(l10n.settings_saved_message,
@@ -177,6 +178,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       SpfSliderWidget(
                         selectedSpf: state.selectedSpf,
                         onChanged: notifier.selectSpf,
+                      ),
+
+                      const SizedBox(height: 32),
+                      const Divider(height: 1),
+                      const SizedBox(height: 24),
+
+                      // SPF application time
+                      _SpfTimeRow(
+                        spfAppliedAt: state.spfAppliedAt,
+                        selectedSpf: state.selectedSpf,
+                        onMarkNow: notifier.markSpfAppliedNow,
+                        onClear: notifier.clearSpfAppliedTime,
+                        l10n: l10n,
                       ),
 
                       const SizedBox(height: 48),
@@ -390,6 +404,127 @@ class _SkinTypeEntry {
   final int type;
   final String label;
   final String desc;
+}
+
+// ── SPF Time Row ──────────────────────────────────────────────────────────────
+
+/// Displays when sunscreen was last applied and provides quick-tap to record.
+///
+/// Uses the bi-exponential SPF decay model (Dermatology_Math_Engine skill):
+/// the timestamp drives `hours_since_application` in backend requests.
+class _SpfTimeRow extends StatelessWidget {
+  const _SpfTimeRow({
+    required this.spfAppliedAt,
+    required this.selectedSpf,
+    required this.onMarkNow,
+    required this.onClear,
+    required this.l10n,
+  });
+
+  final DateTime? spfAppliedAt;
+  final int selectedSpf;
+  final VoidCallback onMarkNow;
+  final VoidCallback onClear;
+  final AppLocalizations l10n;
+
+  String _elapsedLabel() {
+    if (spfAppliedAt == null) return l10n.settings_spfApplied_notSet;
+    final elapsed = DateTime.now().difference(spfAppliedAt!);
+    if (elapsed.inMinutes < 2) return l10n.settings_spfApplied_justNow;
+    final h = elapsed.inHours;
+    final m = elapsed.inMinutes.remainder(60);
+    return l10n.settings_spfApplied_ago(h, m);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Hide if user selected SPF 1 (no sunscreen)
+    if (selectedSpf <= 1) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.settings_spfApplied_label.toUpperCase(),
+          style: AppTypography.labelSmall.copyWith(letterSpacing: 1.6),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.cardSurface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.subtleDivider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  PhosphorIcon(
+                    PhosphorIconsRegular.sun,
+                    size: 18,
+                    color: spfAppliedAt != null
+                        ? AppColors.uvWarnAmber
+                        : AppColors.deepInk.withValues(alpha: 0.35),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    _elapsedLabel(),
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: spfAppliedAt != null
+                          ? AppColors.deepInk
+                          : AppColors.deepInk.withValues(alpha: 0.45),
+                    ),
+                  ),
+                  const Spacer(),
+                  if (spfAppliedAt != null)
+                    GestureDetector(
+                      onTap: onClear,
+                      child: Text(
+                        l10n.settings_spfApplied_clear,
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.uvDangerCoral,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onMarkNow,
+                  icon: PhosphorIcon(PhosphorIconsRegular.checkCircle, size: 16),
+                  label: Text(l10n.settings_spfApplied_setNow),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.uvSafeGreen,
+                    side: const BorderSide(color: AppColors.uvSafeGreen, width: 1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    textStyle: AppTypography.labelSmall.copyWith(
+                      letterSpacing: 0.4,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n.settings_spfApplied_hint,
+                style: AppTypography.labelSmall.copyWith(
+                  color: AppColors.deepInk.withValues(alpha: 0.45),
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 // ── Language Picker ───────────────────────────────────────────────────────────

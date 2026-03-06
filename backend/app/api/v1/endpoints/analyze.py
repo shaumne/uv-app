@@ -14,15 +14,18 @@ Returns [AnalyzeResponse] — full merged colorimetry + dermatology payload.
 """
 import logging
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from ....models.response_models import AnalyzeResponse
 from ....services.colorimetry_service import extract_sticker_data
-from ....services.med_calculator import calculate_uv_risk, uv_percent_to_dose_jm2, classify_risk_by_sticker
+from ....services.med_calculator import calculate_uv_risk, classify_risk_by_sticker, uv_percent_to_dose_jm2
 from ....utils.image_validator import validate_image
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post(
@@ -32,16 +35,23 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     responses={
         422: {"description": "Image validation or sticker detection failure"},
+        429: {"description": "Rate limit exceeded"},
         500: {"description": "Internal image processing error"},
     },
 )
+@limiter.limit("10/minute")
 async def analyze_sticker(
+    request: Request,
     image: UploadFile = File(..., description="Camera image of the UV sticker patch"),
     ambient_lux: float = Form(..., ge=0, description="Ambient light in lux"),
     skin_type: int = Form(..., ge=1, le=6, description="Fitzpatrick skin type"),
     spf: float = Form(default=1.0, ge=1, le=100, description="SPF factor"),
     hours_since_application: float = Form(default=0.0, ge=0, description="Hours since sunscreen applied"),
-    cumulative_dose_jm2: float = Form(default=0.0, ge=0, description="Cumulative UV dose today (J/m²)"),
+    cumulative_dose_jm2: float = Form(
+        default=0.0,
+        ge=0,
+        description="Reserved; sticker reading is used as cumulative dose (J/m²) for this scan",
+    ),
     uv_index: float = Form(default=5.0, ge=0, description="Current UV Index"),
 ) -> AnalyzeResponse:
     """
@@ -99,10 +109,14 @@ async def analyze_sticker(
             detail="Internal image processing error.",
         ) from exc
 
-    # ── Step 3: Convert UV% → J/m² and accumulate ────────────────────────────
+    # ── Step 3: Sticker UV% → cumulative dose (J/m²) ────────────────────────────
+    # The photochromic sticker reading is cumulative (total exposure so far), not
+    # an increment. So cumulative_dose_jm2 for this reading = (uv_percent/100)*MED_base.
+    # We use the sticker-derived value as the cumulative; do not add to client
+    # value to avoid double-counting when the user rescans.
     try:
         scan_dose_jm2 = uv_percent_to_dose_jm2(uv_percent, skin_type)
-        updated_cumulative = cumulative_dose_jm2 + scan_dose_jm2
+        updated_cumulative = scan_dose_jm2
     except ValueError as exc:
         logger.error("Dose conversion failed: %s", exc)
         raise HTTPException(

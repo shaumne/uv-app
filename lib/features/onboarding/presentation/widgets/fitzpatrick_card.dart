@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 
@@ -85,7 +86,7 @@ class FitzpatrickCard extends StatelessWidget {
                     color: AppColors.bihakuLavender,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.check, size: 14, color: Colors.white),
+                  child: PhosphorIcon(PhosphorIconsBold.check, size: 14, color: Colors.white),
                 ),
               ),
             ],

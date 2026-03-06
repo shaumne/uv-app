@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// SPF selection slider.
 ///
 /// Snaps to common SPF values: 1, 15, 30, 50.
 /// 1 = no sunscreen (bare skin).
+/// All labels are fully localised via ARB keys.
 class SpfSliderWidget extends StatelessWidget {
   const SpfSliderWidget({
     required this.selectedSpf,
@@ -20,6 +23,7 @@ class SpfSliderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final idx = _spfValues.indexOf(selectedSpf).clamp(0, _spfValues.length - 1);
 
     return Column(
@@ -29,18 +33,21 @@ class SpfSliderWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Sunscreen SPF', style: AppTypography.bodyLarge),
+            Text(l10n.onboarding_spf_label, style: AppTypography.bodyLarge),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: Container(
                 key: ValueKey(selectedSpf),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.bihakuLavender.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  selectedSpf == 1 ? 'None' : 'SPF $selectedSpf',
+                  selectedSpf == 1
+                      ? l10n.onboarding_spf_noneLabel
+                      : l10n.onboarding_spf_value(selectedSpf),
                   style: AppTypography.labelSmall.copyWith(
                     color: AppColors.bihakuLavender,
                     fontWeight: FontWeight.w600,
@@ -77,7 +84,9 @@ class SpfSliderWidget extends StatelessWidget {
             children: _spfValues.map((v) {
               final isActive = v == selectedSpf;
               return Text(
-                v == 1 ? 'None' : 'SPF $v',
+                v == 1
+                    ? l10n.onboarding_spf_noneLabel
+                    : l10n.onboarding_spf_value(v),
                 style: AppTypography.labelSmall.copyWith(
                   color: isActive
                       ? AppColors.bihakuLavender

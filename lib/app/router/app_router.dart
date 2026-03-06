@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'route_names.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../features/history/presentation/screens/history_screen.dart';
+import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/onboarding/presentation/screens/skin_type_picker_screen.dart';
-import '../../features/home/presentation/screens/home_screen.dart';
-import '../../features/scan/presentation/screens/scan_screen.dart';
-import '../../features/result/presentation/screens/result_screen.dart';
+import '../../features/premium/screens/premium_upsell_sheet.dart';
 import '../../features/result/domain/entities/uv_analysis_result.dart';
+import '../../features/result/presentation/screens/result_screen.dart';
+import '../../features/scan/presentation/screens/scan_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 
 /// Provider that exposes the router — allows GoRouter to listen to
@@ -70,13 +75,125 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) =>
           _fadeSlide(const SettingsScreen(), state),
     ),
-  ],
-  errorBuilder: (context, state) => Scaffold(
-    body: Center(
-      child: Text('Page not found: ${state.uri}'),
+    GoRoute(
+      path: RouteNames.history,
+      pageBuilder: (context, state) =>
+          _fadeSlide(const HistoryScreen(), state),
     ),
-  ),
+    GoRoute(
+      path: RouteNames.premiumUpsell,
+      pageBuilder: (context, state) => CustomTransitionPage<void>(
+        key: state.pageKey,
+        child: const _PremiumUpsellPage(),
+        transitionDuration: const Duration(milliseconds: 350),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved =
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          );
+        },
+      ),
+    ),
+  ],
+  errorBuilder: (context, state) => _NotFoundScreen(uri: state.uri.toString()),
 );
+
+// ── Premium upsell full-screen wrapper ───────────────────────────────────────
+
+/// Wraps [PremiumUpsellSheet] in a dismissible scaffold so it can be
+/// navigated to as a full-screen route (not only a bottom sheet).
+class _PremiumUpsellPage extends StatelessWidget {
+  const _PremiumUpsellPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black54,
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          GestureDetector(
+            onTap: () => context.pop(),
+            behavior: HitTestBehavior.opaque,
+            child: const SizedBox(height: 80),
+          ),
+          const PremiumUpsellSheet(),
+        ],
+      ),
+    );
+  }
+}
+
+// ── 404 / Route not found screen ─────────────────────────────────────────────
+
+/// Styled error screen shown when a navigation target cannot be found.
+///
+/// Replaces the default raw [Text] error builder with a Bihaku-themed page
+/// that guides the user back to the home screen.
+class _NotFoundScreen extends StatelessWidget {
+  const _NotFoundScreen({required this.uri});
+  final String uri;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.clinicalWhite,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: AppColors.subtleDivider,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: PhosphorIcon(
+                  PhosphorIconsRegular.magnifyingGlassMinus,
+                  size: 36,
+                  color: AppColors.deepInk,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Page Not Found',
+                style: AppTypography.headlineMed,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'The page you are looking for does not exist.',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.deepInk.withValues(alpha: 0.55),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () => context.go(RouteNames.home),
+                  child: const Text('Back to Dashboard'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Page transition ───────────────────────────────────────────────────────────
 
 /// Premium fade+upward-slide page transition (280ms, easeOutCubic).
 CustomTransitionPage<void> _fadeSlide(Widget child, GoRouterState state) =>

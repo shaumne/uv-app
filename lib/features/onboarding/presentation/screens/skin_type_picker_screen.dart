@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -51,7 +52,7 @@ class SkinTypePickerScreen extends ConsumerWidget {
         title: Text(l10n.onboarding_welcome_title),
         leading: context.canPop()
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+                icon: PhosphorIcon(PhosphorIconsRegular.caretLeft, size: 18),
                 onPressed: context.pop,
               )
             : null,

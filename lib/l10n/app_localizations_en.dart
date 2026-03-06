@@ -225,6 +225,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboarding_spf_noneLabel => 'None';
 
   @override
+  String onboarding_spf_value(int value) {
+    return 'SPF $value';
+  }
+
+  @override
   String get home_title => 'Today\'\'s UV';
 
   @override
@@ -247,6 +252,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scan_capturing => 'Capturing…';
+
+  @override
+  String get scan_sticker_detecting => 'Detecting sticker…';
 
   @override
   String get scan_analysing => 'Analysing sticker…';
@@ -407,4 +415,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get premium_later_button => 'Maybe later';
+
+  @override
+  String get settings_spfApplied_label => 'Sunscreen Applied';
+
+  @override
+  String get settings_spfApplied_notSet => 'Not recorded';
+
+  @override
+  String get settings_spfApplied_setNow => 'Mark as applied now';
+
+  @override
+  String get settings_spfApplied_clear => 'Clear time';
+
+  @override
+  String settings_spfApplied_ago(int hours, int minutes) {
+    return '${hours}h ${minutes}m ago';
+  }
+
+  @override
+  String get settings_spfApplied_justNow => 'Just applied';
+
+  @override
+  String get settings_spfApplied_hint =>
+      'Track when you last applied sunscreen to calculate protection decay.';
+
+  @override
+  String get history_screen_title => 'UV History';
+
+  @override
+  String get history_7days_label => 'Past 7 Days';
+
+  @override
+  String get history_noData_hint =>
+      'No UV exposure recorded yet. Scan your sticker to start tracking.';
+
+  @override
+  String get history_day_label => 'Day';
+
+  @override
+  String get history_medUsed_label => 'MED Used';
+
+  @override
+  String get history_safe_badge => 'Safe';
+
+  @override
+  String get history_caution_badge => 'Caution';
+
+  @override
+  String get history_warning_badge => 'Warning';
+
+  @override
+  String get history_danger_badge => 'Limit Reached';
+
+  @override
+  String get history_premium_locked =>
+      'Upgrade to Premium to unlock your full 7-day UV exposure history.';
 }

@@ -2,7 +2,9 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:uv_dosimeter/l10n/app_localizations.dart';
+
 import '../../../../app/router/route_names.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -13,15 +15,14 @@ import '../widgets/pulse_overlay_frame.dart';
 
 /// Full-screen immersive camera scan screen.
 ///
-/// Design follows Premium_Cosmeceutical_UI_Designer skill:
-/// - Full-bleed camera preview (no bezels)
-/// - Edge vignette overlay
-/// - PulseOverlayFrame centred
-/// - Bottom sheet: instruction + torch toggle + capture button
+/// Pipeline on capture:
+///   1. User taps shutter → photo taken
+///   2. /detect runs on captured photo
+///   3. If sticker not found → snackbar, user retries
+///   4. If found → /analyze → result screen
 ///
-/// Sticker validation occurs AFTER the photo is taken (server-side).
-/// The capture button is enabled as soon as the camera is ready — no
-/// pre-capture detection loop is run to avoid interference with the shot.
+/// The camera preview runs passively (no background polling) until the
+/// user taps capture. This is resource-efficient and avoids race conditions.
 class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
 
@@ -40,14 +41,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
 
   Future<void> _initCamera() async {
     final ctrl = await ref.read(scanNotifierProvider.notifier).initCamera();
-    if (mounted) {
-      setState(() => _cameraController = ctrl);
-    }
+    if (mounted) setState(() => _cameraController = ctrl);
   }
 
   @override
   void dispose() {
-    // CameraController disposed inside ScanNotifier.dispose()
+    // CameraController is disposed inside ScanNotifier.dispose()
     super.dispose();
   }
 
@@ -88,18 +87,17 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   const SizedBox(height: 12),
                   Text(
                     l10n.scan_cameraStarting,
-                    style: AppTypography.bodyMedium
-                        .copyWith(color: Colors.white54),
+                    style: AppTypography.bodyMedium.copyWith(color: Colors.white54),
                   ),
                 ],
               ),
             ),
 
-          // ── Pulse alignment frame — visible while idle ────────────────────
+          // ── Pulse alignment frame — visible when camera is idle ───────────
           if (scanState.isCameraReady && !scanState.isLoading)
             const Center(child: PulseOverlayFrame()),
 
-          // ── Analysing spinner ─────────────────────────────────────────────
+          // ── Pipeline spinner (capturing / detecting / analysing) ───────────
           if (scanState.isLoading)
             Center(
               child: Column(
@@ -108,11 +106,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   const CircularProgressIndicator(color: Colors.white),
                   const SizedBox(height: 16),
                   Text(
-                    scanState.status == ScanStatus.capturing
-                        ? l10n.scan_capturing
-                        : l10n.scan_analysing,
-                    style: AppTypography.bodyMedium
-                        .copyWith(color: Colors.white70),
+                    _loadingLabel(scanState.status, l10n),
+                    style: AppTypography.bodyMedium.copyWith(color: Colors.white70),
                   ),
                 ],
               ),
@@ -123,8 +118,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new,
-                  color: Colors.white, size: 20),
+              icon: PhosphorIcon(
+                PhosphorIconsRegular.caretLeft,
+                color: Colors.white,
+                size: 20,
+              ),
               onPressed: () => context.go(RouteNames.home),
             ),
           ),
@@ -160,15 +158,22 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
 
   Future<void> _capture(ScanNotifier notifier) async {
     final profileAsync = ref.read(storedSkinProfileProvider);
-    final profile = profileAsync.maybeWhen(
-      data: (p) => p,
-      orElse: () => null,
-    );
-
+    final profile = profileAsync.maybeWhen(data: (p) => p, orElse: () => null);
     await notifier.captureAndAnalyse(
       fitzpatrickType: profile?.fitzpatrickType ?? 2,
       spf: profile?.spf ?? 30,
+      hoursSinceApplication: profile?.hoursSinceApplication ?? 0.0,
     );
+  }
+
+  /// Returns localised spinner label for each pipeline stage.
+  String _loadingLabel(ScanStatus status, AppLocalizations l10n) {
+    return switch (status) {
+      ScanStatus.capturing  => l10n.scan_capturing,
+      ScanStatus.detecting  => l10n.scan_sticker_detecting,
+      ScanStatus.analysing  => l10n.scan_analysing,
+      _                     => l10n.scan_analysing,
+    };
   }
 
   void _showFailureSnackbar(
@@ -177,10 +182,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     ScanNotifier notifier,
   ) {
     if (!mounted) return;
-    // Map backend error code strings to localised messages.
-    // Backend 422 responses contain English detail strings — replace them
-    // with locale-aware copies from ARB files where possible.
-    String _localise(String backendMsg) {
+
+    String localise(String backendMsg) {
       final m = backendMsg.toLowerCase();
       if (m.contains('sticker_not_detected') ||
           m.contains('not detected') ||
@@ -190,23 +193,32 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       if (m.contains('too_small') || m.contains('too small') || m.contains('closer')) {
         return l10n.scan_sticker_tooSmall;
       }
-      if (m.contains('too dark') || m.contains('lighting')) {
+      if (m.contains('insufficient_lighting') ||
+          m.contains('too dark') ||
+          m.contains('lighting')) {
         return l10n.scan_sticker_tooDark;
       }
-      if (m.contains('low_confidence') || m.contains('low confidence')) {
+      if (m.contains('low_confidence') ||
+          m.contains('low confidence') ||
+          m.contains('centre_crop') ||
+          m.contains('center_crop')) {
+        // Centre-crop fallback — analysis still proceeds; not an error.
         return l10n.scan_sticker_notDetected;
       }
-      return backendMsg; // fallback: show raw message
+      if (m.contains('processing_error')) {
+        return l10n.error_server;
+      }
+      return backendMsg;
     }
 
     final msg = switch (failure) {
-      NetworkFailure() => l10n.error_network,
-      CameraFailure() => failure.message,
-      ImageProcessingFailure() => _localise(failure.message),
-      ServerFailure() => failure.message.isNotEmpty
-          ? _localise(failure.message)
-          : l10n.error_server,
-      _ => l10n.error_unknown,
+      NetworkFailure()          => l10n.error_network,
+      CameraFailure()           => failure.message,
+      ImageProcessingFailure()  => localise(failure.message),
+      ServerFailure()           => failure.message.isNotEmpty
+                                      ? localise(failure.message)
+                                      : l10n.error_server,
+      _                         => l10n.error_unknown,
     };
 
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -224,8 +236,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
           },
         ),
         onVisible: () {
-          // Auto-reset after 4 s so the capture button becomes tappable again
-          // even if the user dismisses the snackbar without pressing Retry.
+          // Auto-reset 4 s after snackbar appears so the capture button
+          // becomes tappable again if the user dismisses without pressing Retry.
           Future.delayed(const Duration(seconds: 4), () {
             if (mounted) notifier.resetAfterError();
           });
@@ -234,6 +246,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     );
   }
 }
+
+// ── Vignette overlay ──────────────────────────────────────────────────────────
 
 class _VignetteOverlay extends StatelessWidget {
   const _VignetteOverlay();
@@ -265,6 +279,7 @@ class _BottomControls extends StatelessWidget {
     required this.guideHint,
     required this.onTorchToggle,
     required this.onCapture,
+    super.key,
   });
 
   final bool isTorchOn;
@@ -278,7 +293,8 @@ class _BottomControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-          24, 24, 24, 24 + MediaQuery.of(context).padding.bottom),
+        24, 24, 24, 24 + MediaQuery.of(context).padding.bottom,
+      ),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.65),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -297,15 +313,17 @@ class _BottomControls extends StatelessWidget {
             children: [
               // Torch toggle
               IconButton(
-                icon: Icon(
-                  isTorchOn ? Icons.flashlight_on : Icons.flashlight_off,
+                icon: PhosphorIcon(
+                  isTorchOn
+                      ? PhosphorIconsFill.flashlight
+                      : PhosphorIconsRegular.flashlight,
                   color: isTorchOn ? AppColors.uvWarnAmber : Colors.white54,
                   size: 28,
                 ),
                 onPressed: onTorchToggle,
               ),
 
-              // Capture button — active when camera is ready
+              // Shutter button
               GestureDetector(
                 onTap: (isCapturing || !canCapture) ? null : onCapture,
                 child: AnimatedContainer(
@@ -347,7 +365,7 @@ class _BottomControls extends StatelessWidget {
                 ),
               ),
 
-              // Symmetric spacing placeholder
+              // Symmetric spacing
               const SizedBox(width: 48),
             ],
           ),

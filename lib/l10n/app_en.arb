@@ -94,6 +94,13 @@
   "onboarding_splash_body": "Your photochromic sticker measures UV in real time.\nWe turn colour into care.",
   "onboarding_spf_label": "Sunscreen SPF",
   "onboarding_spf_noneLabel": "None",
+  "onboarding_spf_value": "SPF {value}",
+  "@onboarding_spf_value": {
+    "description": "SPF value label on slider tick marks and badge.",
+    "placeholders": {
+      "value": { "type": "int" }
+    }
+  },
 
   "home_title": "Today''s UV",
   "home_noData_hint2": "Scan your sticker to begin tracking.",
@@ -104,6 +111,7 @@
   "home_pullToRefresh": "Pull to refresh",
 
   "scan_capturing": "Capturing…",
+  "scan_sticker_detecting": "Detecting sticker…",
   "scan_analysing": "Analysing sticker…",
   "scan_cameraStarting": "Starting camera…",
   "scan_torch_on": "Torch on",
@@ -164,5 +172,30 @@
   "premium_title": "UV Dosimeter Premium",
   "premium_body": "Unlock advanced skin analysis, exposure history, and personalised UV reports.",
   "premium_upgrade_button": "Upgrade to Premium",
-  "premium_later_button": "Maybe later"
+  "premium_later_button": "Maybe later",
+
+  "settings_spfApplied_label": "Sunscreen Applied",
+  "settings_spfApplied_notSet": "Not recorded",
+  "settings_spfApplied_setNow": "Mark as applied now",
+  "settings_spfApplied_clear": "Clear time",
+  "settings_spfApplied_ago": "{hours}h {minutes}m ago",
+  "@settings_spfApplied_ago": {
+    "placeholders": {
+      "hours": { "type": "int" },
+      "minutes": { "type": "int" }
+    }
+  },
+  "settings_spfApplied_justNow": "Just applied",
+  "settings_spfApplied_hint": "Track when you last applied sunscreen to calculate protection decay.",
+
+  "history_screen_title": "UV History",
+  "history_7days_label": "Past 7 Days",
+  "history_noData_hint": "No UV exposure recorded yet. Scan your sticker to start tracking.",
+  "history_day_label": "Day",
+  "history_medUsed_label": "MED Used",
+  "history_safe_badge": "Safe",
+  "history_caution_badge": "Caution",
+  "history_warning_badge": "Warning",
+  "history_danger_badge": "Limit Reached",
+  "history_premium_locked": "Upgrade to Premium to unlock your full 7-day UV exposure history."
 }

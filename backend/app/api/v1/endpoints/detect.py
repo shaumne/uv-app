@@ -4,30 +4,39 @@ POST /api/v1/detect — Lightweight sticker presence check.
 Accepts a single camera frame (JPEG/PNG) and returns whether a valid
 photochromic sticker was detected, with a confidence score.
 
-This endpoint skips all MED/SPF calculation — it is designed to be called
-rapidly (every ~1.5 s) from the scan screen's live preview loop so the UI
-can give the user real-time feedback before committing to a full analysis.
+Design intent (v3):
+  The endpoint is intentionally optimistic — it blocks only genuinely
+  unusable images (too dark, corrupt) and passes everything else to the
+  full /analyze pipeline.  A false positive here wastes one /analyze call;
+  a false negative blocks the entire scan pipeline for the user.
+
+  When contour detection fails or scores below the minimum threshold,
+  detected=True is still returned with reason="centre_crop_fallback" so
+  /analyze can extract colour from the on-screen guide frame region.
 
 Request body (multipart/form-data):
     image: UploadFile  — camera frame JPEG/PNG
 
 Response (200):
     {
-        "detected": bool,      # true if sticker found and confidence is sufficient
+        "detected": bool,      # true unless image is corrupt/too dark
         "confidence": float,   # 0.0 – 1.0
-        "reason": str | null   # null when detected, error code otherwise
+        "reason": str | null   # null on clean detection; code otherwise
     }
 """
 import logging
 
-from fastapi import APIRouter, File, UploadFile, status
+from fastapi import APIRouter, File, Request, UploadFile, status
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from ....services.colorimetry_service import detect_sticker_presence
 from ....utils.image_validator import validate_image
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 class DetectResponse(BaseModel):
@@ -41,8 +50,11 @@ class DetectResponse(BaseModel):
     response_model=DetectResponse,
     summary="Lightweight sticker presence detection for live camera feedback",
     status_code=status.HTTP_200_OK,
+    responses={429: {"description": "Rate limit exceeded"}},
 )
+@limiter.limit("60/minute")
 async def detect_sticker(
+    request: Request,
     image: UploadFile = File(..., description="Camera preview frame (JPEG/PNG)"),
 ) -> DetectResponse:
     """

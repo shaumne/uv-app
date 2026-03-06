@@ -23,28 +23,25 @@ from app.services.colorimetry_service import (
 
 class TestHexToUvPercent:
     """
-    Calibration curve anchors from ComputerVision_Colorimetry skill:
-        #FFE4B5 (moccasin-ish, fresh) → 0%
-        #FFD700 (gold, 25%)           → 25%
-        #FFA500 (orange, 50%)         → 50%
-        #FF8C00 (darkorange, 75%)     → 75%
-        #8B4513 (saddlebrown, 100%)   → 100%
+    Calibration curve from ComputerVision_Colorimetry skill (L* → UV%):
+        (90,0), (75,10), (60,25), (45,50), (30,75), (15,100).
+    LAB L*: high = fresh → low UV%; low = dark → high UV%.
     """
 
     def test_fresh_sticker_near_zero(self):
-        """Very light sticker hex → near 0% UV exposure."""
+        """Very light sticker (moccasin #FFE4B5, L*≈92) → near 0% UV."""
         pct = _hex_to_uv_percent("#FFE4B5")
         assert pct <= 15.0, f"Expected <= 15%, got {pct:.1f}%"
 
-    def test_dark_sticker_near_hundred(self):
-        """Dark brown sticker → near 100% UV exposure."""
+    def test_dark_sticker_high_exposure(self):
+        """Dark brown (#8B4513, L*≈38) → high UV% (skill curve ~60%+)."""
         pct = _hex_to_uv_percent("#8B4513")
-        assert pct >= 85.0, f"Expected >= 85%, got {pct:.1f}%"
+        assert pct >= 55.0, f"Expected >= 55%, got {pct:.1f}%"
 
     def test_midpoint_sticker(self):
-        """Mid-tone orange sticker → roughly 40–60% UV exposure."""
+        """Orange (#FFA500, L*≈75) → low–mid UV% (skill curve ~10–25%)."""
         pct = _hex_to_uv_percent("#FFA500")
-        assert 30.0 <= pct <= 70.0, f"Expected 40–60%, got {pct:.1f}%"
+        assert 5.0 <= pct <= 35.0, f"Expected 5–35%, got {pct:.1f}%"
 
     def test_output_within_0_to_100_range(self):
         """UV% must be clamped to 0–100 range."""
@@ -66,9 +63,9 @@ class TestHexToUvPercent:
         assert pct <= 20.0
 
     def test_pure_black_near_hundred(self):
-        """Pure black sticker → near 100% UV (maximum darkening)."""
+        """Pure black (L*=0) → 100% UV (clamped; maximum darkening)."""
         pct = _hex_to_uv_percent("#000000")
-        assert pct >= 80.0
+        assert pct >= 95.0
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -104,22 +101,25 @@ class TestWhiteBalanceLab:
 
 class TestDominantHexKmeans:
     def test_returns_valid_hex_format(self):
-        """Should return a string like #RRGGBB."""
+        """Should return a string like #RRGGBB. Pixels must be (N, 3) BGR."""
         region = np.full((80, 80, 3), [200, 100, 50], dtype=np.uint8)
-        hex_color = _dominant_hex_kmeans(region)
+        pixels = region.reshape(-1, 3)
+        hex_color = _dominant_hex_kmeans(pixels)
         assert hex_color.startswith("#"), f"Expected #RRGGBB, got '{hex_color}'"
         assert len(hex_color) == 7, f"Expected 7 chars, got {len(hex_color)}"
 
     def test_uniform_red_returns_red_ish_hex(self):
-        """A solid red region should produce a red-dominant hex."""
+        """A solid red region (BGR: R=index 2) should produce red-dominant hex."""
         red_region = np.zeros((80, 80, 3), dtype=np.uint8)
         red_region[:, :, 2] = 200  # BGR: red channel = index 2
-        hex_color = _dominant_hex_kmeans(red_region)
+        pixels = red_region.reshape(-1, 3)
+        hex_color = _dominant_hex_kmeans(pixels)
         r_val = int(hex_color[1:3], 16)
         assert r_val > 100, f"Expected red-dominant hex, got {hex_color}"
 
     def test_handles_small_regions(self):
-        """Should not crash on very small regions (edge case)."""
+        """Should not crash on very small pixel sets (edge case)."""
         tiny = np.full((5, 5, 3), [128, 64, 32], dtype=np.uint8)
-        result = _dominant_hex_kmeans(tiny)
+        pixels = tiny.reshape(-1, 3)
+        result = _dominant_hex_kmeans(pixels)
         assert result.startswith("#")
