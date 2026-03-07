@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Pulsing scan guide frame — from Premium_Cosmeceutical_UI_Designer skill.
+/// Pulsing scan guide — from Premium_Cosmeceutical_UI_Designer skill.
 ///
-/// Displays four L-shaped corner marks that form the sticker alignment guide.
-/// The frame pulses continuously with a soft fade animation while the camera
-/// preview is idle. It is only visible between [ScanStatus.idle] and the
-/// moment the user taps the shutter, so no detected/undetected colour toggle
-/// is needed.
+/// Displays a circle that matches the backend ROI: user places the sticker
+/// inside this circle and captures; the app reads only the centre region.
+/// The circle pulses with a soft fade while the camera is idle.
 class PulseOverlayFrame extends StatefulWidget {
   const PulseOverlayFrame({super.key});
 
@@ -41,26 +39,26 @@ class _PulseOverlayFrameState extends State<PulseOverlayFrame>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _opacity,
-      child: const _ScanFrameCorners(),
+      child: const _ScanFrameCircle(),
     );
   }
 }
 
-/// Four L-shaped corner marks that form the sticker alignment guide frame.
-class _ScanFrameCorners extends StatelessWidget {
-  const _ScanFrameCorners();
+/// Circle guide sized to encompass the sticker; backend reads the centre ROI.
+class _ScanFrameCircle extends StatelessWidget {
+  const _ScanFrameCircle();
 
-  static const _size = 220.0;
-  static const _cornerLength = 28.0;
+  /// Diameter: sticker'ı rahatça kapsayacak boyut (dp).
+  static const _diameter = 220.0;
   static const _strokeWidth = 3.0;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: _size,
-      height: _size,
+      width: _diameter,
+      height: _diameter,
       child: CustomPaint(
-        painter: _CornerPainter(
+        painter: _CircleGuidePainter(
           color: Colors.white70,
           strokeWidth: _strokeWidth,
         ),
@@ -69,40 +67,27 @@ class _ScanFrameCorners extends StatelessWidget {
   }
 }
 
-class _CornerPainter extends CustomPainter {
-  const _CornerPainter({required this.color, required this.strokeWidth});
+class _CircleGuidePainter extends CustomPainter {
+  const _CircleGuidePainter({required this.color, required this.strokeWidth});
 
   final Color color;
   final double strokeWidth;
 
   @override
   void paint(Canvas canvas, Size size) {
-    const len = _ScanFrameCorners._cornerLength;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+
     final paint = Paint()
       ..color = color
       ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
-    final w = size.width;
-    final h = size.height;
-
-    // Top-left
-    canvas
-      ..drawLine(Offset(0, len), Offset.zero, paint)
-      ..drawLine(Offset.zero, Offset(len, 0), paint)
-      // Top-right
-      ..drawLine(Offset(w - len, 0), Offset(w, 0), paint)
-      ..drawLine(Offset(w, 0), Offset(w, len), paint)
-      // Bottom-left
-      ..drawLine(Offset(0, h - len), Offset(0, h), paint)
-      ..drawLine(Offset(0, h), Offset(len, h), paint)
-      // Bottom-right
-      ..drawLine(Offset(w - len, h), Offset(w, h), paint)
-      ..drawLine(Offset(w, h - len), Offset(w, h), paint);
+    canvas.drawCircle(center, radius, paint);
   }
 
   @override
-  bool shouldRepaint(_CornerPainter old) =>
+  bool shouldRepaint(_CircleGuidePainter old) =>
       old.color != color || old.strokeWidth != strokeWidth;
 }

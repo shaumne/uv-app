@@ -430,6 +430,36 @@ abstract class AppLocalizations {
   /// **'Location access helps us fetch local UV data.'**
   String get error_location;
 
+  /// No description provided for @error_location_services_off.
+  ///
+  /// In en, this message translates to:
+  /// **'Location services are off.'**
+  String get error_location_services_off;
+
+  /// No description provided for @error_location_denied_forever.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission denied. Enable in device Settings.'**
+  String get error_location_denied_forever;
+
+  /// No description provided for @error_location_denied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission required for UV index.'**
+  String get error_location_denied;
+
+  /// No description provided for @error_location_timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Location timed out. UV index unavailable.'**
+  String get error_location_timeout;
+
+  /// No description provided for @error_location_unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Location unavailable.'**
+  String get error_location_unavailable;
+
   /// No description provided for @error_server.
   ///
   /// In en, this message translates to:
@@ -886,6 +916,12 @@ abstract class AppLocalizations {
   /// **'UV History'**
   String get history_screen_title;
 
+  /// No description provided for @history_today_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get history_today_label;
+
   /// No description provided for @history_7days_label.
   ///
   /// In en, this message translates to:
@@ -939,6 +975,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Upgrade to Premium to unlock your full 7-day UV exposure history.'**
   String get history_premium_locked;
+
+  /// No description provided for @error_pageNotFound_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Not Found'**
+  String get error_pageNotFound_title;
+
+  /// No description provided for @error_pageNotFound_message.
+  ///
+  /// In en, this message translates to:
+  /// **'The page you are looking for does not exist.'**
+  String get error_pageNotFound_message;
 }
 
 class _AppLocalizationsDelegate

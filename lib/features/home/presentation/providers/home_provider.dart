@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../app/di/providers.dart';
 import '../../../../core/error/failures.dart';
-import '../../../../core/services/notification_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../data/datasources/dose_history_local_datasource.dart';
@@ -48,6 +47,12 @@ final getDailyDoseSummaryProvider = Provider(
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
+/// Reason for a dose-related notification; UI shows it with l10n and then clears.
+enum PendingDoseNotification {
+  threshold80,
+  dailyDone,
+}
+
 class HomeState {
   const HomeState({
     this.uvIndex,
@@ -56,6 +61,7 @@ class HomeState {
     this.isLoadingDose = false,
     this.uvFailure,
     this.doseFailure,
+    this.pendingDoseNotification,
   });
 
   final UvIndex? uvIndex;
@@ -64,6 +70,7 @@ class HomeState {
   final bool isLoadingDose;
   final Failure? uvFailure;
   final Failure? doseFailure;
+  final PendingDoseNotification? pendingDoseNotification;
 
   bool get isLoading => isLoadingUv || isLoadingDose;
 
@@ -74,6 +81,7 @@ class HomeState {
     bool? isLoadingDose,
     Failure? uvFailure,
     Failure? doseFailure,
+    PendingDoseNotification? pendingDoseNotification,
   }) =>
       HomeState(
         uvIndex: uvIndex ?? this.uvIndex,
@@ -82,6 +90,7 @@ class HomeState {
         isLoadingDose: isLoadingDose ?? this.isLoadingDose,
         uvFailure: uvFailure,
         doseFailure: doseFailure,
+        pendingDoseNotification: pendingDoseNotification,
       );
 }
 
@@ -126,7 +135,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
       appLogger.w('[HomeProvider] Location unavailable: $e');
       state = state.copyWith(
         isLoadingUv: false,
-        uvFailure: LocationFailure(_friendlyLocationError(e.toString())),
+        uvFailure: LocationFailure(_locationErrorCode(e.toString())),
       );
     }
   }
@@ -143,7 +152,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
     );
   }
 
-  /// Fires dose-threshold notifications when MED fraction crosses 80% or 100%.
+  /// Requests a dose-threshold notification; UI layer will show it with l10n.
   ///
   /// Uses session-level booleans to prevent repeated alerts; resets when the
   /// notifier is disposed (autoDispose) and recreated on next app launch.
@@ -153,17 +162,16 @@ class HomeNotifier extends StateNotifier<HomeState> {
     if (!_notifiedDone && fraction >= 1.0) {
       _notifiedDone = true;
       _notified80 = true;
-      NotificationService.showDailyDone(
-        title: 'UV Dosimeter',
-        body: "You've hit your UV dose for today. Your skin will thank you for staying protected!",
-      );
+      state = state.copyWith(pendingDoseNotification: PendingDoseNotification.dailyDone);
     } else if (!_notified80 && fraction >= 0.8) {
       _notified80 = true;
-      NotificationService.showThreshold80(
-        title: 'UV Dosimeter',
-        body: "You've reached 80% of your safe UV limit for today. Consider moving to shade soon.",
-      );
+      state = state.copyWith(pendingDoseNotification: PendingDoseNotification.threshold80);
     }
+  }
+
+  /// Clears the pending dose notification after the UI has shown it with l10n.
+  void clearPendingDoseNotification() {
+    state = state.copyWith(pendingDoseNotification: null);
   }
 
   /// Requests location permission and returns the best available position.
@@ -214,20 +222,13 @@ class HomeNotifier extends StateNotifier<HomeState> {
     );
   }
 
-  String _friendlyLocationError(String raw) {
-    if (raw.contains('location_service_disabled')) {
-      return 'Location services are off.';
-    }
-    if (raw.contains('denied_forever')) {
-      return 'Location permission denied. Enable in device Settings.';
-    }
-    if (raw.contains('permission_denied')) {
-      return 'Location permission required for UV index.';
-    }
-    if (raw.contains('TimeoutException')) {
-      return 'Location timed out. UV index unavailable.';
-    }
-    return 'Location unavailable.';
+  /// Returns a stable code for UI to map to l10n (see [locationErrorMessage] in home_screen).
+  String _locationErrorCode(String raw) {
+    if (raw.contains('location_service_disabled')) return 'location_services_off';
+    if (raw.contains('denied_forever')) return 'location_denied_forever';
+    if (raw.contains('permission_denied')) return 'location_denied';
+    if (raw.contains('TimeoutException')) return 'location_timeout';
+    return 'location_unavailable';
   }
 }
 

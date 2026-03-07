@@ -71,20 +71,27 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _backgroundTint,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text(AppLocalizations.of(context)!.result_screen_title),
-        leading: IconButton(
-          icon: PhosphorIcon(PhosphorIconsRegular.caretLeft, size: 18),
-          onPressed: () => context.go(RouteNames.home),
+    final l10n = AppLocalizations.of(context)!;
+    return Semantics(
+      label: l10n.result_screen_title,
+      child: Scaffold(
+        backgroundColor: _backgroundTint,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          title: Text(l10n.result_screen_title),
+          leading: Semantics(
+            button: true,
+            label: l10n.result_backHome,
+            child: IconButton(
+              icon: PhosphorIcon(PhosphorIconsRegular.caretLeft, size: 18),
+              onPressed: () => context.go(RouteNames.home),
+            ),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
             children: [
               const SizedBox(height: 8),
 
@@ -144,6 +151,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
               const SizedBox(height: 40),
             ],
+            ),
           ),
         ),
       ),

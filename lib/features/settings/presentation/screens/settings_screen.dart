@@ -87,15 +87,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       }
     });
 
-    return Scaffold(
-      backgroundColor: AppColors.clinicalWhite,
-      appBar: AppBar(
-        title: Text(l10n.settings_title),
-        leading: IconButton(
-          icon: PhosphorIcon(PhosphorIconsRegular.caretLeft, size: 18),
-          onPressed: () => context.go(RouteNames.home),
-        ),
-        actions: [
+    return Semantics(
+      label: l10n.settings_title,
+      child: Scaffold(
+        backgroundColor: AppColors.clinicalWhite,
+        appBar: AppBar(
+          title: Text(l10n.settings_title),
+          leading: Semantics(
+            button: true,
+            label: l10n.result_backHome,
+            child: IconButton(
+              icon: PhosphorIcon(PhosphorIconsRegular.caretLeft, size: 18),
+              onPressed: () => context.go(RouteNames.home),
+            ),
+          ),
+          actions: [
           // Save button in app bar — visible but disabled while saving
           TextButton(
             onPressed: state.isSaving ? null : notifier.saveChanges,
@@ -188,7 +194,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                       _SpfTimeRow(
                         spfAppliedAt: state.spfAppliedAt,
                         selectedSpf: state.selectedSpf,
-                        onMarkNow: notifier.markSpfAppliedNow,
+                        onMarkNow: () => notifier.markSpfAppliedNow(
+                          notificationTitle: l10n.appName,
+                          notificationBody: l10n.notification_spfExpired_body,
+                        ),
                         onClear: notifier.clearSpfAppliedTime,
                         l10n: l10n,
                       ),
@@ -267,6 +276,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
             ),
           ),
         ],
+      ),
       ),
     );
   }

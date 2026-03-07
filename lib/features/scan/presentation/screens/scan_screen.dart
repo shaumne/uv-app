@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:uv_dosimeter/l10n/app_localizations.dart';
 
+import '../../../../app/di/providers.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -66,82 +67,97 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       }
     });
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // ── Camera preview ────────────────────────────────────────────────
-          _buildCameraPreview(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        notifier.releaseCamera();
+        if (mounted) context.go(RouteNames.home);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // ── Camera preview ────────────────────────────────────────────────
+            _buildCameraPreview(),
 
-          // ── Vignette overlay ──────────────────────────────────────────────
-          const _VignetteOverlay(),
+            // ── Vignette overlay ──────────────────────────────────────────────
+            const _VignetteOverlay(),
 
-          // ── Camera initialising spinner ───────────────────────────────────
-          if (!scanState.isCameraReady && !scanState.isLoading)
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(color: Colors.white54),
-                  const SizedBox(height: 12),
-                  Text(
-                    l10n.scan_cameraStarting,
-                    style: AppTypography.bodyMedium.copyWith(color: Colors.white54),
+            // ── Camera initialising spinner ───────────────────────────────────
+            if (!scanState.isCameraReady && !scanState.isLoading)
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(color: Colors.white54),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.scan_cameraStarting,
+                      style: AppTypography.bodyMedium.copyWith(color: Colors.white54),
+                    ),
+                  ],
+                ),
+              ),
+
+            // ── Pulse alignment frame — visible when camera is idle ───────────
+            if (scanState.isCameraReady && !scanState.isLoading)
+              const Center(child: PulseOverlayFrame()),
+
+            // ── Pipeline spinner (capturing / detecting / analysing) ───────────
+            if (scanState.isLoading)
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(color: Colors.white),
+                    const SizedBox(height: 16),
+                    Text(
+                      _loadingLabel(scanState.status, l10n),
+                      style: AppTypography.bodyMedium.copyWith(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+
+            // ── Back button ───────────────────────────────────────────────────
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8,
+              left: 16,
+              child: Semantics(
+                button: true,
+                label: l10n.scan_back,
+                child: IconButton(
+                  icon: PhosphorIcon(
+                    PhosphorIconsRegular.caretLeft,
+                    color: Colors.white,
+                    size: 20,
                   ),
-                ],
+                  onPressed: () {
+                    notifier.releaseCamera();
+                    context.go(RouteNames.home);
+                  },
+                ),
               ),
             ),
 
-          // ── Pulse alignment frame — visible when camera is idle ───────────
-          if (scanState.isCameraReady && !scanState.isLoading)
-            const Center(child: PulseOverlayFrame()),
-
-          // ── Pipeline spinner (capturing / detecting / analysing) ───────────
-          if (scanState.isLoading)
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(color: Colors.white),
-                  const SizedBox(height: 16),
-                  Text(
-                    _loadingLabel(scanState.status, l10n),
-                    style: AppTypography.bodyMedium.copyWith(color: Colors.white70),
-                  ),
-                ],
+            // ── Bottom controls ───────────────────────────────────────────────
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _BottomControls(
+                isTorchOn: scanState.isTorchOn,
+                isCapturing: scanState.isLoading,
+                canCapture: scanState.canCapture,
+                guideHint: l10n.scan_guideOverlay_hint,
+                onTorchToggle: notifier.toggleTorch,
+                onCapture: () => _capture(notifier),
               ),
             ),
-
-          // ── Back button ───────────────────────────────────────────────────
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 16,
-            child: IconButton(
-              icon: PhosphorIcon(
-                PhosphorIconsRegular.caretLeft,
-                color: Colors.white,
-                size: 20,
-              ),
-              onPressed: () => context.go(RouteNames.home),
-            ),
-          ),
-
-          // ── Bottom controls ───────────────────────────────────────────────
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _BottomControls(
-              isTorchOn: scanState.isTorchOn,
-              isCapturing: scanState.isLoading,
-              canCapture: scanState.canCapture,
-              guideHint: l10n.scan_guideOverlay_hint,
-              onTorchToggle: notifier.toggleTorch,
-              onCapture: () => _capture(notifier),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -159,10 +175,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   Future<void> _capture(ScanNotifier notifier) async {
     final profileAsync = ref.read(storedSkinProfileProvider);
     final profile = profileAsync.maybeWhen(data: (p) => p, orElse: () => null);
+    final ambientLux = await ref.read(ambientLightServiceProvider).getCurrentLux();
     await notifier.captureAndAnalyse(
       fitzpatrickType: profile?.fitzpatrickType ?? 2,
       spf: profile?.spf ?? 30,
       hoursSinceApplication: profile?.hoursSinceApplication ?? 0.0,
+      ambientLux: ambientLux,
     );
   }
 
@@ -213,7 +231,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
 
     final msg = switch (failure) {
       NetworkFailure()          => l10n.error_network,
-      CameraFailure()           => failure.message,
+      CameraFailure()           => l10n.error_camera,
       ImageProcessingFailure()  => localise(failure.message),
       ServerFailure()           => failure.message.isNotEmpty
                                       ? localise(failure.message)

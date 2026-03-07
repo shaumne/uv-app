@@ -29,6 +29,10 @@ dependencies:
   # ── Camera & Permissions ──────────────────────────────────────────────────
   camera: ^0.11.1
   permission_handler: ^11.4.0
+  image: ^4.0.17
+
+  # ── Ambient light (for scan white-balance; fallback 500 lux if unavailable) ─
+  ambient_light: ^0.1.4
 
   # ── Location ──────────────────────────────────────────────────────────────
   geolocator: ^13.0.2
@@ -79,6 +83,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  # When adding splash_logo.png to assets/images/, add: assets: [ assets/images/ ]
 
 # ── Native Splash Screen ──────────────────────────────────────────────────────
 # Run: dart run flutter_native_splash:create

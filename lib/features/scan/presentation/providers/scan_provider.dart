@@ -14,6 +14,7 @@ import '../../../home/presentation/providers/home_provider.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../../result/domain/entities/uv_analysis_result.dart';
 import '../../data/datasources/scan_remote_datasource.dart';
+import '../../data/utils/guide_roi_crop.dart';
 import '../../data/repositories/scan_repository_impl.dart';
 import '../../domain/entities/scan_request.dart';
 import '../../domain/usecases/analyze_sticker.dart';
@@ -171,16 +172,22 @@ class ScanNotifier extends StateNotifier<ScanState> {
     state = state.copyWith(isTorchOn: next);
   }
 
-  /// Full scan pipeline: capture → detect → analyse.
+  /// Releases the camera controller (dispose + null). Call before leaving the
+  /// scan screen (e.g. back gesture) to avoid crash when the route is popped.
+  void releaseCamera() {
+    _cameraController?.dispose();
+    _cameraController = null;
+    state = state.copyWith(isCameraReady: false);
+  }
+
+  /// Full scan pipeline: capture → crop to guide ROI → detect → analyse.
   ///
   /// Steps:
   ///   1. Takes a photo with the rear camera.
-  ///   2. Sends it to /detect to verify a sticker is present.
-  ///      - Backend is optimistic: only genuinely unusable images are blocked.
-  ///      - Centre-crop fallback is used automatically for low-confidence cases.
-  ///   3. Sends the same photo to /analyze for colour extraction + MED calc.
+  ///   2. Crops to the guide circle region (centre 45 %) so API receives only that area.
+  ///   3. Sends cropped image to /detect, then /analyze. Only purple/transparent in ROI is accepted.
   ///
-  /// The captured file is always deleted from disk after use.
+  /// Original and cropped temp files are deleted after use.
   Future<UvAnalysisResult?> captureAndAnalyse({
     required int fitzpatrickType,
     required int spf,
@@ -213,17 +220,32 @@ class ScanNotifier extends StateNotifier<ScanState> {
       return null;
     }
 
+    // ── Crop to guide ROI (kılavuz daire = sadece o alan API'ye gider) ───────
+    String imagePathForApi = photo.path;
+    try {
+      imagePathForApi = await cropImageToGuideRoi(photo.path);
+    } catch (e, st) {
+      appLogger.w('[ScanNotifier] Guide ROI crop failed', error: e, stackTrace: st);
+      _deleteFile(photo.path);
+      state = state.copyWith(
+        status: ScanStatus.error,
+        failure: ImageProcessingFailure('Failed to prepare image. Please try again.'),
+      );
+      return null;
+    }
+
     // ── Stage 2: Detect ─────────────────────────────────────────────────────
     state = state.copyWith(status: ScanStatus.detecting);
 
     StickerDetectionResult? detection;
     try {
       detection = await _deps.remoteDatasource.detectSticker(
-        imagePath: photo.path,
+        imagePath: imagePathForApi,
       );
     } on NetworkException catch (e) {
       appLogger.e('[ScanNotifier] /detect network error', error: e);
       _deleteFile(photo.path);
+      _deleteFile(imagePathForApi);
       state = state.copyWith(
         status: ScanStatus.error,
         failure: NetworkFailure(e.message),
@@ -232,6 +254,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
     } on ImageProcessingException catch (e) {
       appLogger.w('[ScanNotifier] /detect image error: ${e.message}');
       _deleteFile(photo.path);
+      _deleteFile(imagePathForApi);
       state = state.copyWith(
         status: ScanStatus.error,
         failure: ImageProcessingFailure(e.message),
@@ -240,6 +263,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
     } catch (e, st) {
       appLogger.e('[ScanNotifier] /detect unexpected error', error: e, stackTrace: st);
       _deleteFile(photo.path);
+      _deleteFile(imagePathForApi);
       state = state.copyWith(
         status: ScanStatus.error,
         failure: const ImageProcessingFailure('Detection request failed. Please try again.'),
@@ -248,12 +272,10 @@ class ScanNotifier extends StateNotifier<ScanState> {
     }
 
     if (!detection.detected) {
-      // Hard block — image is genuinely unusable (too dark, corrupt).
-      // Backend only returns detected=false for insufficient_lighting and
-      // processing_error; all other cases use the centre-crop fallback.
       final reason = detection.reason ?? 'sticker_not_detected';
-      appLogger.i('[ScanNotifier] Detection hard-blocked. reason=$reason confidence=${detection.confidence}');
+      appLogger.i('[ScanNotifier] Detection blocked. reason=$reason confidence=${detection.confidence}');
       _deleteFile(photo.path);
+      _deleteFile(imagePathForApi);
       state = state.copyWith(
         status: ScanStatus.error,
         failure: ImageProcessingFailure(reason),
@@ -261,23 +283,13 @@ class ScanNotifier extends StateNotifier<ScanState> {
       return null;
     }
 
-    // Log whether we are using the reliable contour path or the fallback.
-    final isFallback = detection.reason != null &&
-        (detection.reason!.contains('fallback') ||
-         detection.reason!.contains('low_confidence'));
-    if (isFallback) {
-      appLogger.i(
-        '[ScanNotifier] Sticker detected via fallback (confidence=${detection.confidence.toStringAsFixed(2)}, reason=${detection.reason}). Proceeding to /analyze.',
-      );
-    } else {
-      appLogger.d('[ScanNotifier] Sticker detected (confidence=${detection.confidence.toStringAsFixed(2)})');
-    }
+    appLogger.d('[ScanNotifier] Sticker detected (confidence=${detection.confidence.toStringAsFixed(2)})');
 
     // ── Stage 3: Analyse ────────────────────────────────────────────────────
     state = state.copyWith(status: ScanStatus.analysing);
 
     final request = ScanRequest(
-      imagePath: photo.path,
+      imagePath: imagePathForApi,
       ambientLux: ambientLux,
       fitzpatrickType: fitzpatrickType,
       spf: spf,
@@ -294,6 +306,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
     final either = await AnalyzeSticker(repository)(request);
 
     _deleteFile(photo.path);
+    _deleteFile(imagePathForApi);
 
     return either.fold(
       (failure) {

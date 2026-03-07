@@ -14,6 +14,7 @@ class ScanRequestModel {
         request.imagePath,
         filename: 'sticker.jpg',
       ),
+      'pre_cropped': 'true', // Client sends only the guide ROI
       'ambient_lux': request.ambientLux,
       'skin_type': request.fitzpatrickType,
       'spf': request.spf,

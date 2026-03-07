@@ -228,10 +228,11 @@ class _WeekBarChart extends StatelessWidget {
         const SizedBox(height: 8),
         const Divider(height: 1, color: AppColors.subtleDivider),
         const SizedBox(height: 8),
-        // Day labels
+        // Day labels (take up to 2 chars; Japanese E can be 1 char e.g. 日 → avoid RangeError)
         Row(
           children: entries.map((entry) {
-            final dayLabel = DateFormat.E(locale).format(entry.date).substring(0, 2);
+            final raw = DateFormat.E(locale).format(entry.date);
+            final dayLabel = raw.length >= 2 ? raw.substring(0, 2) : raw;
             return Expanded(
               child: Text(
                 dayLabel,
@@ -286,7 +287,7 @@ class _DayDetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).toString();
     final dateLabel = entry.isToday
-        ? 'Today'
+        ? l10n.history_today_label
         : DateFormat.MMMd(locale).format(entry.date);
 
     return Padding(

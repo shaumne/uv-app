@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import 'route_names.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
@@ -141,6 +142,7 @@ class _NotFoundScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.clinicalWhite,
       body: SafeArea(
@@ -164,13 +166,13 @@ class _NotFoundScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'Page Not Found',
+                l10n.error_pageNotFound_title,
                 style: AppTypography.headlineMed,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
-                'The page you are looking for does not exist.',
+                l10n.error_pageNotFound_message,
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.deepInk.withValues(alpha: 0.55),
                 ),
@@ -182,7 +184,7 @@ class _NotFoundScreen extends StatelessWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () => context.go(RouteNames.home),
-                  child: const Text('Back to Dashboard'),
+                  child: Text(l10n.result_backHome),
                 ),
               ),
             ],

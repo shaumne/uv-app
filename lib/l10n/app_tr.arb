@@ -85,6 +85,11 @@
   "error_network": "İnternet bağlantısı yok. Ayarlarınızı kontrol edin.",
   "error_camera": "Sticker''ı taramak için kamera izni gereklidir.",
   "error_location": "Yerel UV verisi için konum izni gereklidir.",
+  "error_location_services_off": "Konum servisleri kapalı.",
+  "error_location_denied_forever": "Konum izni reddedildi. Cihaz Ayarlarından açın.",
+  "error_location_denied": "UV indeksi için konum izni gereklidir.",
+  "error_location_timeout": "Konum zaman aşımına uğradı. UV indeksi kullanılamıyor.",
+  "error_location_unavailable": "Konum kullanılamıyor.",
   "error_server": "Sunucumuz geçici olarak kullanılamıyor. Lütfen tekrar deneyin.",
   "error_unknown": "Beklenmedik bir hata oluştu. Uygulamayı yeniden başlatın.",
   "error_retry_button": "Tekrar Dene",
@@ -183,6 +188,7 @@
   "settings_spfApplied_hint": "SPF koruma azalmasını doğru hesaplamak için güneş kremini ne zaman sürdüğünü kaydet.",
 
   "history_screen_title": "UV Geçmişi",
+  "history_today_label": "Bugün",
   "history_7days_label": "Son 7 Gün",
   "history_noData_hint": "Henüz UV kaydı yok. Takibi başlatmak için sticker''ı tarayın.",
   "history_day_label": "Gün",
@@ -191,5 +197,7 @@
   "history_caution_badge": "Dikkat",
   "history_warning_badge": "Uyarı",
   "history_danger_badge": "Limit Doldu",
-  "history_premium_locked": "7 günlük UV geçmişinizi görmek için Premium''a geçin."
+  "history_premium_locked": "7 günlük UV geçmişinizi görmek için Premium''a geçin.",
+  "error_pageNotFound_title": "Sayfa Bulunamadı",
+  "error_pageNotFound_message": "Aradığınız sayfa mevcut değil."
 }

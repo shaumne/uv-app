@@ -101,6 +101,7 @@ class ScanRemoteDatasourceImpl implements ScanRemoteDatasource {
     try {
       formData = FormData.fromMap({
         ApiConstants.fieldImage: await MultipartFile.fromFile(imagePath),
+        'pre_cropped': 'true', // Client sends only the guide ROI
       });
     } catch (e) {
       appLogger.w('[ScanDatasource] detect: failed to read image file: $e');

@@ -95,18 +95,21 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   /// Records the current time as the SPF application timestamp and schedules
   /// an SPF expiry reminder notification to fire in 2 hours.
-  void markSpfAppliedNow() {
+  ///
+  /// [notificationTitle] and [notificationBody] must be passed from the UI
+  /// (l10n) so the reminder is shown in the user's language.
+  void markSpfAppliedNow({
+    required String notificationTitle,
+    required String notificationBody,
+  }) {
     state = state.copyWith(
       spfAppliedAt: DateTime.now(),
       errorMessage: null,
       isSaved: false,
     );
-    // Schedule a reminder to reapply sunscreen after the bi-exponential SPF
-    // decay model's primary efficacy window (~2 hours).
     NotificationService.scheduleSpfExpiredReminder(
-      title: 'UV Dosimeter',
-      body:
-          "Your sunscreen's protection has likely faded. A quick reapplication keeps you covered.",
+      title: notificationTitle,
+      body: notificationBody,
       delayHours: 2.0,
     );
   }

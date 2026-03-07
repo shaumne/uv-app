@@ -85,6 +85,11 @@
   "error_network": "No internet connection. Please check your settings.",
   "error_camera": "Camera access is required to scan the sticker.",
   "error_location": "Location access helps us fetch local UV data.",
+  "error_location_services_off": "Location services are off.",
+  "error_location_denied_forever": "Location permission denied. Enable in device Settings.",
+  "error_location_denied": "Location permission required for UV index.",
+  "error_location_timeout": "Location timed out. UV index unavailable.",
+  "error_location_unavailable": "Location unavailable.",
   "error_server": "Our server is temporarily unavailable. Please try again.",
   "error_unknown": "Something went wrong. Please restart the app.",
   "error_retry_button": "Retry",
@@ -189,6 +194,7 @@
   "settings_spfApplied_hint": "Track when you last applied sunscreen to calculate protection decay.",
 
   "history_screen_title": "UV History",
+  "history_today_label": "Today",
   "history_7days_label": "Past 7 Days",
   "history_noData_hint": "No UV exposure recorded yet. Scan your sticker to start tracking.",
   "history_day_label": "Day",
@@ -197,5 +203,7 @@
   "history_caution_badge": "Caution",
   "history_warning_badge": "Warning",
   "history_danger_badge": "Limit Reached",
-  "history_premium_locked": "Upgrade to Premium to unlock your full 7-day UV exposure history."
+  "history_premium_locked": "Upgrade to Premium to unlock your full 7-day UV exposure history.",
+  "error_pageNotFound_title": "Page Not Found",
+  "error_pageNotFound_message": "The page you are looking for does not exist."
 }

@@ -205,6 +205,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get error_location => 'Yerel UV verisi için konum izni gereklidir.';
 
   @override
+  String get error_location_services_off => 'Konum servisleri kapalı.';
+
+  @override
+  String get error_location_denied_forever =>
+      'Konum izni reddedildi. Cihaz Ayarlarından açın.';
+
+  @override
+  String get error_location_denied => 'UV indeksi için konum izni gereklidir.';
+
+  @override
+  String get error_location_timeout =>
+      'Konum zaman aşımına uğradı. UV indeksi kullanılamıyor.';
+
+  @override
+  String get error_location_unavailable => 'Konum kullanılamıyor.';
+
+  @override
   String get error_server =>
       'Sunucumuz geçici olarak kullanılamıyor. Lütfen tekrar deneyin.';
 
@@ -454,6 +471,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get history_screen_title => 'UV Geçmişi';
 
   @override
+  String get history_today_label => 'Bugün';
+
+  @override
   String get history_7days_label => 'Son 7 Gün';
 
   @override
@@ -481,4 +501,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get history_premium_locked =>
       '7 günlük UV geçmişinizi görmek için Premium\'\'a geçin.';
+
+  @override
+  String get error_pageNotFound_title => 'Sayfa Bulunamadı';
+
+  @override
+  String get error_pageNotFound_message => 'Aradığınız sayfa mevcut değil.';
 }

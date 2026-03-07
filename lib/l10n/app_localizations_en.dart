@@ -199,6 +199,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get error_location => 'Location access helps us fetch local UV data.';
 
   @override
+  String get error_location_services_off => 'Location services are off.';
+
+  @override
+  String get error_location_denied_forever =>
+      'Location permission denied. Enable in device Settings.';
+
+  @override
+  String get error_location_denied =>
+      'Location permission required for UV index.';
+
+  @override
+  String get error_location_timeout =>
+      'Location timed out. UV index unavailable.';
+
+  @override
+  String get error_location_unavailable => 'Location unavailable.';
+
+  @override
   String get error_server =>
       'Our server is temporarily unavailable. Please try again.';
 
@@ -444,6 +462,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get history_screen_title => 'UV History';
 
   @override
+  String get history_today_label => 'Today';
+
+  @override
   String get history_7days_label => 'Past 7 Days';
 
   @override
@@ -471,4 +492,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get history_premium_locked =>
       'Upgrade to Premium to unlock your full 7-day UV exposure history.';
+
+  @override
+  String get error_pageNotFound_title => 'Page Not Found';
+
+  @override
+  String get error_pageNotFound_message =>
+      'The page you are looking for does not exist.';
 }

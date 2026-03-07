@@ -196,6 +196,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get error_location => '現地のUVデータを取得するために位置情報が必要です。';
 
   @override
+  String get error_location_services_off => '位置情報サービスがオフです。';
+
+  @override
+  String get error_location_denied_forever => '位置情報の許可が拒否されています。設定で有効にしてください。';
+
+  @override
+  String get error_location_denied => 'UV指数取得には位置情報の許可が必要です。';
+
+  @override
+  String get error_location_timeout => '位置情報の取得がタイムアウトしました。UV指数は利用できません。';
+
+  @override
+  String get error_location_unavailable => '位置情報を利用できません。';
+
+  @override
   String get error_server => 'サーバーが一時的に利用できません。しばらくしてから再度お試しください。';
 
   @override
@@ -433,6 +448,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get history_screen_title => 'UV履歴';
 
   @override
+  String get history_today_label => '今日';
+
+  @override
   String get history_7days_label => '過去7日間';
 
   @override
@@ -458,4 +476,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get history_premium_locked => 'プレミアムにアップグレードして、7日間の紫外線履歴をご確認ください。';
+
+  @override
+  String get error_pageNotFound_title => 'ページが見つかりません';
+
+  @override
+  String get error_pageNotFound_message => 'お探しのページは存在しません。';
 }
