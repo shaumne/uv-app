@@ -2,8 +2,9 @@ import 'dart:io';
 
 import 'package:image/image.dart' as img;
 
-/// Kılavuz dairenin kapladığı alan: backend ile aynı oran (merkez kare, kenar = min(w,h)*0.45).
-const double guideRoiFraction = 0.45;
+/// Kılavuz dairenin kapladığı alan: merkez kare, kenar = min(w,h)*[guideRoiFraction].
+/// Küçültüldü (0.45→0.36) böylece kullanıcı ekrana yaklaşmadan net çekim yapabilsin.
+const double guideRoiFraction = 0.36;
 
 /// Çekilen fotoğrafı kılavuz alanına göre kırpar; API'ye sadece bu bölge gidecek.
 ///

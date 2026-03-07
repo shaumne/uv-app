@@ -48,8 +48,8 @@ class _PulseOverlayFrameState extends State<PulseOverlayFrame>
 class _ScanFrameCircle extends StatelessWidget {
   const _ScanFrameCircle();
 
-  /// Diameter: sticker'ı rahatça kapsayacak boyut (dp).
-  static const _diameter = 220.0;
+  /// Diameter: sticker'ı kapsayacak boyut; daha küçük = daha uzak çekim, daha iyi netlik.
+  static const _diameter = 176.0;
   static const _strokeWidth = 3.0;
 
   @override
