@@ -241,6 +241,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
     try {
       detection = await _deps.remoteDatasource.detectSticker(
         imagePath: imagePathForApi,
+        ambientLux: ambientLux,
       );
     } on NetworkException catch (e) {
       appLogger.e('[ScanNotifier] /detect network error', error: e);

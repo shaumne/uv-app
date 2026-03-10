@@ -4,23 +4,23 @@ POST /api/v1/detect — Lightweight sticker presence check.
 Accepts a single camera frame (JPEG/PNG) and returns whether a valid
 photochromic sticker was detected, with a confidence score.
 
-Design intent (v3):
-  The endpoint is intentionally optimistic — it blocks only genuinely
-  unusable images (too dark, corrupt) and passes everything else to the
-  full /analyze pipeline.  A false positive here wastes one /analyze call;
-  a false negative blocks the entire scan pipeline for the user.
-
-  When contour detection fails or scores below the minimum threshold,
-  detected=True is still returned with reason="centre_crop_fallback" so
-  /analyze can extract colour from the on-screen guide frame region.
+Design intent (v4):
+  Strict contour detection is applied to prevent false positives (e.g. purple
+  clothing, random purple regions). Only images that pass shape checks (aspect
+  ratio, solidity, fill ratio, minimum area) return detected=True; otherwise
+  detected=False with a descriptive reason. This avoids sending non-sticker
+  regions to /analyze and keeps the pipeline predictable. Unusable images
+  (too dark, corrupt, invalid format) also return detected=False.
 
 Request body (multipart/form-data):
-    image: UploadFile  — camera frame JPEG/PNG
+    image: UploadFile       — camera frame JPEG/PNG
+    pre_cropped: str | None — if 'true', image is already cropped to guide ROI
+    ambient_lux: float      — ambient light in lux (optional; used for adaptive mask)
 
 Response (200):
     {
-        "detected": bool,      # true unless image is corrupt/too dark
-        "confidence": float,   # 0.0 – 1.0
+        "detected": bool,      # true only when contour passes all shape checks
+        "confidence": float,   # 0.5 – 1.0 when detected; 0.0 when not
         "reason": str | null   # null on clean detection; code otherwise
     }
 """
@@ -57,6 +57,7 @@ async def detect_sticker(
     request: Request,
     image: UploadFile = File(..., description="Camera preview frame (JPEG/PNG)"),
     pre_cropped: str | None = Form(None, description="If 'true', image is already cropped to guide ROI"),
+    ambient_lux: float = Form(1000.0, description="Ambient light sensor reading in lux (for adaptive HSV mask)"),
 ) -> DetectResponse:
     """
     Runs only the sticker-isolation step of the colorimetry pipeline.
@@ -83,7 +84,11 @@ async def detect_sticker(
         return DetectResponse(detected=False, confidence=0.0, reason=str(exc))
 
     use_full_roi = (pre_cropped or "").strip().lower() == "true"
-    result = detect_sticker_presence(image_bytes, pre_cropped=use_full_roi)
+    result = detect_sticker_presence(
+        image_bytes,
+        ambient_lux=ambient_lux,
+        pre_cropped=use_full_roi,
+    )
     logger.debug(
         "[Detect] detected=%s confidence=%.2f reason=%s",
         result["detected"], result["confidence"], result.get("reason"),

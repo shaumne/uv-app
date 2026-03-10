@@ -32,7 +32,11 @@ abstract interface class ScanRemoteDatasource {
   });
 
   /// Lightweight check — returns detection result without full MED analysis.
-  Future<StickerDetectionResult> detectSticker({required String imagePath});
+  /// [ambientLux] is used for adaptive HSV mask on the backend (optional; default 1000).
+  Future<StickerDetectionResult> detectSticker({
+    required String imagePath,
+    double? ambientLux,
+  });
 }
 
 class ScanRemoteDatasourceImpl implements ScanRemoteDatasource {
@@ -96,13 +100,18 @@ class ScanRemoteDatasourceImpl implements ScanRemoteDatasource {
   @override
   Future<StickerDetectionResult> detectSticker({
     required String imagePath,
+    double? ambientLux,
   }) async {
     FormData formData;
     try {
-      formData = FormData.fromMap({
+      final map = <String, dynamic>{
         ApiConstants.fieldImage: await MultipartFile.fromFile(imagePath),
         'pre_cropped': 'true', // Client sends only the guide ROI
-      });
+      };
+      if (ambientLux != null) {
+        map['ambient_lux'] = ambientLux;
+      }
+      formData = FormData.fromMap(map);
     } catch (e) {
       appLogger.w('[ScanDatasource] detect: failed to read image file: $e');
       throw ImageProcessingException(message: 'Failed to read captured image: $e');
