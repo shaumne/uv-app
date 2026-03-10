@@ -175,12 +175,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   Future<void> _capture(ScanNotifier notifier) async {
     final profileAsync = ref.read(storedSkinProfileProvider);
     final profile = profileAsync.maybeWhen(data: (p) => p, orElse: () => null);
-    final ambientLux = await ref.read(ambientLightServiceProvider).getCurrentLux();
     await notifier.captureAndAnalyse(
       fitzpatrickType: profile?.fitzpatrickType ?? 2,
       spf: profile?.spf ?? 30,
       hoursSinceApplication: profile?.hoursSinceApplication ?? 0.0,
-      ambientLux: ambientLux,
     );
   }
 

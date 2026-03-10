@@ -9,6 +9,7 @@ import '../../../../core/error/exceptions.dart'
     hide CameraException; // camera package defines its own CameraException
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
+import '../../../../core/services/ambient_light_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../home/presentation/providers/home_provider.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
@@ -29,6 +30,7 @@ final analyzeStickerUseCaseProvider = Provider<_ScanDependencies>((ref) {
   return _ScanDependencies(
     remoteDatasource: ref.watch(scanRemoteDatasourceProvider),
     networkInfo: ref.watch(networkInfoProvider),
+    ambientLightService: ref.watch(ambientLightServiceProvider),
   );
 });
 
@@ -37,9 +39,11 @@ class _ScanDependencies {
   const _ScanDependencies({
     required this.remoteDatasource,
     required this.networkInfo,
+    required this.ambientLightService,
   });
   final ScanRemoteDatasource remoteDatasource;
   final NetworkInfo networkInfo;
+  final AmbientLightService ambientLightService;
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -183,17 +187,14 @@ class ScanNotifier extends StateNotifier<ScanState> {
   /// Full scan pipeline: capture → crop to guide ROI → detect → analyse.
   ///
   /// Steps:
-  ///   1. Takes a photo with the rear camera.
-  ///   2. Crops to the guide circle region (centre 45 %) so API receives only that area.
-  ///   3. Sends cropped image to /detect, then /analyze. Only purple/transparent in ROI is accepted.
+  ///   1. Takes a photo and reads ambient lux in parallel (same moment).
+  ///   2. Crops to the guide circle region so API receives only that area.
+  ///   3. Sends cropped image to /detect, then /analyze. Only purple/sticker shape in ROI is accepted.
   ///
   /// Original and cropped temp files are deleted after use.
   Future<UvAnalysisResult?> captureAndAnalyse({
     required int fitzpatrickType,
     required int spf,
-    // Default to 500 lux (overcast outdoor) — a conservative but realistic
-    // value used for logging only; white balance runs independently.
-    double ambientLux = 500.0,
     double hoursSinceApplication = 0.0,
   }) async {
     final ctrl = _cameraController;
@@ -205,12 +206,19 @@ class ScanNotifier extends StateNotifier<ScanState> {
       return null;
     }
 
-    // ── Stage 1: Capture ────────────────────────────────────────────────────
+    // ── Stage 1: Capture & read lux simultaneously ───────────────────────────
+    // Future.wait ensures we get the light reading from the exact moment of shutter.
     state = state.copyWith(status: ScanStatus.capturing, failure: null);
 
     XFile? photo;
+    double currentLux = AmbientLightService.fallbackLux;
     try {
-      photo = await ctrl.takePicture();
+      final results = await Future.wait([
+        ctrl.takePicture(),
+        _deps.ambientLightService.getCurrentLux(),
+      ]);
+      photo = results[0] as XFile;
+      currentLux = results[1] as double;
     } on CameraException catch (e) {
       appLogger.e('[ScanNotifier] Capture failed', error: e);
       state = state.copyWith(
@@ -241,7 +249,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
     try {
       detection = await _deps.remoteDatasource.detectSticker(
         imagePath: imagePathForApi,
-        ambientLux: ambientLux,
+        ambientLux: currentLux,
       );
     } on NetworkException catch (e) {
       appLogger.e('[ScanNotifier] /detect network error', error: e);
@@ -291,7 +299,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
 
     final request = ScanRequest(
       imagePath: imagePathForApi,
-      ambientLux: ambientLux,
+      ambientLux: currentLux,
       fitzpatrickType: fitzpatrickType,
       spf: spf,
     );
