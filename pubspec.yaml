@@ -1,5 +1,5 @@
 name: uv_dosimeter
-description: "Dynamic UV Dosimeter Patch and AI Dermatologist"
+description: "BlancMate — Dynamic UV Dosimeter Patch and AI Dermatologist"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -83,7 +83,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
-  # When adding splash_logo.png to assets/images/, add: assets: [ assets/images/ ]
+  assets:
+    - assets/images/
+    - assets/images/empty_home.png
+    - assets/images/empty_history.png
 
 # ── Native Splash Screen ──────────────────────────────────────────────────────
 # Run: dart run flutter_native_splash:create
@@ -91,7 +94,7 @@ flutter:
 flutter_native_splash:
   color: "#F9F7F5"
   color_dark: "#1A1A2E"
-  # image: assets/images/splash_logo.png  # uncomment once asset is added
+  image: assets/images/splash_logo.png
   android_12:
     color: "#F9F7F5"
     color_dark: "#1A1A2E"

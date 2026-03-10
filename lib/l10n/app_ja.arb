@@ -1,7 +1,7 @@
 {
   "@@locale": "ja",
 
-  "appName": "UVドシメーター",
+  "appName": "BlancMate",
 
   "onboarding_welcome_title": "あなたの肌を知ろう",
   "onboarding_welcome_subtitle": "いくつかの質問にお答えいただき、パーソナライズされた美白ケアを始めましょう。",
@@ -168,7 +168,7 @@
   "settings_reset_button": "リセット",
   "settings_cancel_button": "キャンセル",
 
-  "premium_title": "UVドシメーター プレミアム",
+  "premium_title": "BlancMate プレミアム",
   "premium_body": "高度な肌分析、日焼け履歴、パーソナライズされたUVレポートをご利用いただけます。",
   "premium_upgrade_button": "プレミアムにアップグレード",
   "premium_later_button": "あとで",

@@ -58,7 +58,18 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Spacer(flex: 3),
+                  const Spacer(flex: 2),
+
+                  // Hero illustration — BlancMate / UV protection
+                  Center(
+                    child: Image.asset(
+                      'assets/images/onboarding_hero.png',
+                      fit: BoxFit.contain,
+                      height: 200,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
 
                   // UV indicator dot — subtle branding
                   Container(

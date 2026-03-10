@@ -1,6 +1,6 @@
-# UV Dosimeter
+# BlancMate
 
-Dynamic UV Dosimeter Patch and AI Dermatologist — a Flutter app that works with a photochromic sticker to measure personal UV exposure and recommend safe sun time based on Fitzpatrick skin type and SPF.
+BlancMate — Dynamic UV Dosimeter Patch and AI Dermatologist. A Flutter app that works with a photochromic sticker to measure personal UV exposure and recommend safe sun time based on Fitzpatrick skin type and SPF.
 
 ## Features
 

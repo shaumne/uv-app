@@ -9,7 +9,7 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
-  String get appName => 'UV Dozimetre';
+  String get appName => 'BlancMate';
 
   @override
   String get onboarding_welcome_title => 'Cildinizi Tanıyın';
@@ -431,7 +431,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settings_cancel_button => 'İptal';
 
   @override
-  String get premium_title => 'UV Dozimetre Premium';
+  String get premium_title => 'BlancMate Premium';
 
   @override
   String get premium_body =>

@@ -39,6 +39,6 @@ class AppConfig {
   static const String uvIndexBaseUrl = 'https://currentuvindex.com/api/v1';
 
   // ── App metadata ─────────────────────────────────────────────────────────
-  static const String appName = 'UV Dosimeter';
+  static const String appName = 'BlancMate';
   static const String supportEmail = 'support@uvdosimetry.com';
 }

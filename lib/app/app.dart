@@ -21,7 +21,7 @@ class UvDosimeterApp extends ConsumerWidget {
     final locale = ref.watch(localeNotifierProvider);
 
     return MaterialApp.router(
-      title: 'UV Dosimeter',
+      title: 'BlancMate',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: appRouter,

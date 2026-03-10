@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "UV Dosimeter — EC2 (16.170.120.34)",
+      "name": "BlancMate — EC2 (16.170.120.34)",
       "request": "launch",
       "type": "dart",
       "args": [
@@ -10,7 +10,7 @@
       ]
     },
     {
-      "name": "UV Dosimeter — Dev (LAN) 10.20.10.154",
+      "name": "BlancMate — Dev (LAN) 10.20.10.154",
       "request": "launch",
       "type": "dart",
       "args": [
@@ -18,7 +18,7 @@
       ]
     },
     {
-      "name": "UV Dosimeter — Dev (Emulator localhost)",
+      "name": "BlancMate — Dev (Emulator localhost)",
       "request": "launch",
       "type": "dart",
       "args": [
@@ -26,7 +26,7 @@
       ]
     },
     {
-      "name": "UV Dosimeter — Staging",
+      "name": "BlancMate — Staging",
       "request": "launch",
       "type": "dart",
       "args": [
@@ -34,7 +34,7 @@
       ]
     },
     {
-      "name": "UV Dosimeter — Production",
+      "name": "BlancMate — Production",
       "request": "launch",
       "type": "dart",
       "args": [

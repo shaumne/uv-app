@@ -47,11 +47,50 @@ class ResultHeaderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          // Primary message (skill: Bihaku tone for ja, direct for en, warm for tr)
-          Text(_primaryMessage(l10n), style: AppTypography.headlineMed),
+          // Status icon + primary message
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Image.asset(
+                _statusIconAsset,
+                width: 48,
+                height: 48,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _statusColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.wb_sunny_outlined, size: 28, color: _statusColor),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  _primaryMessage(l10n),
+                  style: AppTypography.headlineMed,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  /// Asset path for safe / caution / danger status icon.
+  String get _statusIconAsset {
+    if (result.isSafe) return 'assets/images/icon_safe.png';
+    if (result.isCaution) return 'assets/images/icon_caution.png';
+    return 'assets/images/icon_danger.png';
+  }
+
+  Color get _statusColor {
+    if (result.isSafe) return AppColors.uvSafeGreen;
+    if (result.isCaution) return AppColors.uvWarnAmber;
+    return AppColors.uvDangerCoral;
   }
 
   /// All messages delegate to ARB — fully localised, Bihaku-safe for Japanese.

@@ -212,41 +212,61 @@ class HomeScreen extends ConsumerWidget {
 
                     const SizedBox(height: 48),
 
-                    // ── Arc gauge ─────────────────────────────────────────────
+                    // ── No data (0%): empty state illustration; else arc gauge ───
                     Center(
                       child: state.isLoadingDose
                           ? const ShimmerBox(width: 200, height: 200, radius: 100)
-                          : UvArcGauge(
-                              percentage: state.doseSummary?.medUsedFraction ?? 0,
-                            ),
+                          : state.doseSummary == null ||
+                                    state.doseSummary!.medUsedFraction == 0
+                              ? Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/empty_home.png',
+                                      fit: BoxFit.contain,
+                                      width: 200,
+                                      height: 200,
+                                      errorBuilder: (_, __, ___) =>
+                                          const SizedBox(width: 200, height: 200),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    Text(
+                                      l10n.home_noData_hint2,
+                                      style: AppTypography.bodyMedium,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                )
+                              : UvArcGauge(
+                                  percentage: state.doseSummary!.medUsedFraction,
+                                ),
                     ),
 
                     const SizedBox(height: 28),
 
-                    // ── Remaining time chip ───────────────────────────────────
-                    Center(
-                      child: state.isLoadingDose
-                          ? const ShimmerBox(width: 160, height: 36, radius: 24)
-                          : RemainingTimeChip(
-                              minutes:
-                                  state.doseSummary?.remainingMinutes ?? 0,
-                              medFraction:
-                                  state.doseSummary?.medUsedFraction ?? 0,
-                            ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Status message
-                    Center(
-                      child: Text(
-                        state.doseSummary == null
-                            ? l10n.home_noData_hint2
-                            : _statusMessage(l10n, state.doseSummary!.medUsedFraction),
-                        style: AppTypography.bodyMedium,
-                        textAlign: TextAlign.center,
+                    // ── Remaining time chip (only when we have dose data, >0%) ─
+                    if (state.doseSummary != null &&
+                        state.doseSummary!.medUsedFraction > 0)
+                      Center(
+                        child: RemainingTimeChip(
+                          minutes: state.doseSummary!.remainingMinutes,
+                          medFraction: state.doseSummary!.medUsedFraction,
+                        ),
                       ),
-                    ),
+                    if (state.doseSummary != null &&
+                        state.doseSummary!.medUsedFraction > 0)
+                      const SizedBox(height: 16),
+
+                    // Status message (when we have dose data, >0%)
+                    if (state.doseSummary != null &&
+                        state.doseSummary!.medUsedFraction > 0)
+                      Center(
+                        child: Text(
+                          _statusMessage(l10n, state.doseSummary!.medUsedFraction),
+                          style: AppTypography.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
 
                     const SizedBox(height: 48),
 

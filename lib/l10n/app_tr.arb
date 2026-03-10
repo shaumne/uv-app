@@ -1,7 +1,7 @@
 {
   "@@locale": "tr",
 
-  "appName": "UV Dozimetre",
+  "appName": "BlancMate",
 
   "onboarding_welcome_title": "Cildinizi Tanıyın",
   "onboarding_welcome_subtitle": "Kişiselleştirilmiş UV korumanız için birkaç soruyu yanıtlayın.",
@@ -168,7 +168,7 @@
   "settings_reset_button": "Sıfırla",
   "settings_cancel_button": "İptal",
 
-  "premium_title": "UV Dozimetre Premium",
+  "premium_title": "BlancMate Premium",
   "premium_body": "Gelişmiş cilt analizi, maruziyet geçmişi ve kişisel UV raporlarının kilidini açın.",
   "premium_upgrade_button": "Premium''a Geç",
   "premium_later_button": "Belki daha sonra",

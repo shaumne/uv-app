@@ -1,4 +1,4 @@
-# UV Dosimeter — Sonraki Adımlar ve Opsiyonel İyileştirmeler
+# BlancMate — Sonraki Adımlar ve Opsiyonel İyileştirmeler
 
 Bu dokümanda **tamamlanmış** işler, **kalan küçük iyileştirmeler** ve **isteğe bağlı** geliştirmeler listelenir.
 

@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
 
-  "appName": "UV Dosimeter",
+  "appName": "BlancMate",
 
   "onboarding_welcome_title": "Know Your Skin",
   "onboarding_welcome_subtitle": "Answer a few questions so we can personalise your UV protection.",
@@ -174,7 +174,7 @@
   "settings_reset_button": "Reset",
   "settings_cancel_button": "Cancel",
 
-  "premium_title": "UV Dosimeter Premium",
+  "premium_title": "BlancMate Premium",
   "premium_body": "Unlock advanced skin analysis, exposure history, and personalised UV reports.",
   "premium_upgrade_button": "Upgrade to Premium",
   "premium_later_button": "Maybe later",

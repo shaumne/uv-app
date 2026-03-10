@@ -1,4 +1,4 @@
-# UV Dosimeter — Geliştirme Eksikleri ve İyileştirme Raporu
+# BlancMate — Geliştirme Eksikleri ve İyileştirme Raporu
 
 Bu rapor, verdiğiniz prompt ve Agent Skill’lere (ComputerVision, Dermatology Math, Cultural Localization, Premium UI) göre projenin incelenmesi sonucunda tespit edilen **eksik** ve **iyileştirilmesi gereken** alanları özetler. Reklam ve premium özellikler gelir amacı olmadığı için “yapılması gerekli” listesine alınmamıştır.
 

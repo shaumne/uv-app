@@ -367,10 +367,16 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            PhosphorIcon(
-              PhosphorIconsRegular.sun,
-              size: 56,
-              color: AppColors.deepInk.withValues(alpha: 0.15),
+            Image.asset(
+              'assets/images/empty_history.png',
+              fit: BoxFit.contain,
+              width: 200,
+              height: 200,
+              errorBuilder: (_, __, ___) => PhosphorIcon(
+                PhosphorIconsRegular.sun,
+                size: 56,
+                color: AppColors.deepInk.withValues(alpha: 0.15),
+              ),
             ),
             const SizedBox(height: 24),
             Text(

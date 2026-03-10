@@ -103,7 +103,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'UV Dosimeter'**
+  /// **'BlancMate'**
   String get appName;
 
   /// No description provided for @onboarding_welcome_title.
@@ -847,7 +847,7 @@ abstract class AppLocalizations {
   /// No description provided for @premium_title.
   ///
   /// In en, this message translates to:
-  /// **'UV Dosimeter Premium'**
+  /// **'BlancMate Premium'**
   String get premium_title;
 
   /// No description provided for @premium_body.

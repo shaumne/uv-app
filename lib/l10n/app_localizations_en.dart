@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appName => 'UV Dosimeter';
+  String get appName => 'BlancMate';
 
   @override
   String get onboarding_welcome_title => 'Know Your Skin';
@@ -422,7 +422,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_cancel_button => 'Cancel';
 
   @override
-  String get premium_title => 'UV Dosimeter Premium';
+  String get premium_title => 'BlancMate Premium';
 
   @override
   String get premium_body =>

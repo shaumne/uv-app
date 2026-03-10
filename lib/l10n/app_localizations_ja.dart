@@ -9,7 +9,7 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
-  String get appName => 'UVドシメーター';
+  String get appName => 'BlancMate';
 
   @override
   String get onboarding_welcome_title => 'あなたの肌を知ろう';
@@ -410,7 +410,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settings_cancel_button => 'キャンセル';
 
   @override
-  String get premium_title => 'UVドシメーター プレミアム';
+  String get premium_title => 'BlancMate プレミアム';
 
   @override
   String get premium_body => '高度な肌分析、日焼け履歴、パーソナライズされたUVレポートをご利用いただけます。';
