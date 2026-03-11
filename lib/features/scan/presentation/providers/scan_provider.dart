@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
@@ -11,13 +10,12 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/services/ambient_light_service.dart';
 import '../../../../core/utils/logger.dart';
-import '../../../home/presentation/providers/home_provider.dart';
-import '../../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../../result/domain/entities/uv_analysis_result.dart';
 import '../../data/datasources/scan_remote_datasource.dart';
 import '../../data/utils/guide_roi_crop.dart';
 import '../../data/repositories/scan_repository_impl.dart';
 import '../../domain/entities/scan_request.dart';
+import '../../domain/repositories/scan_repository.dart';
 import '../../domain/usecases/analyze_sticker.dart';
 
 // ── Infrastructure providers ──────────────────────────────────────────────────
@@ -26,8 +24,16 @@ final scanRemoteDatasourceProvider = Provider<ScanRemoteDatasource>(
   (ref) => ScanRemoteDatasourceImpl(ref.watch(dioProvider)),
 );
 
+final scanRepositoryProvider = Provider<ScanRepository>((ref) {
+  return ScanRepositoryImpl(
+    remoteDatasource: ref.watch(scanRemoteDatasourceProvider),
+    networkInfo: ref.watch(networkInfoProvider),
+  );
+});
+
 final analyzeStickerUseCaseProvider = Provider<_ScanDependencies>((ref) {
   return _ScanDependencies(
+    repository: ref.watch(scanRepositoryProvider),
     remoteDatasource: ref.watch(scanRemoteDatasourceProvider),
     networkInfo: ref.watch(networkInfoProvider),
     ambientLightService: ref.watch(ambientLightServiceProvider),
@@ -37,10 +43,12 @@ final analyzeStickerUseCaseProvider = Provider<_ScanDependencies>((ref) {
 /// Bundles Scan infrastructure dependencies for injection into [ScanNotifier].
 class _ScanDependencies {
   const _ScanDependencies({
+    required this.repository,
     required this.remoteDatasource,
     required this.networkInfo,
     required this.ambientLightService,
   });
+  final ScanRepository repository;
   final ScanRemoteDatasource remoteDatasource;
   final NetworkInfo networkInfo;
   final AmbientLightService ambientLightService;
@@ -113,16 +121,9 @@ class ScanState {
 /// until the user taps the shutter button, conserving battery and avoiding
 /// concurrent-capture race conditions.
 class ScanNotifier extends StateNotifier<ScanState> {
-  ScanNotifier({
-    required _ScanDependencies deps,
-    required this.currentDoseJm2,
-    required this.currentUvIndex,
-  })  : _deps = deps,
-        super(const ScanState());
+  ScanNotifier({required _ScanDependencies deps}) : _deps = deps, super(const ScanState());
 
   final _ScanDependencies _deps;
-  final double currentDoseJm2;
-  final double currentUvIndex;
 
   CameraController? _cameraController;
 
@@ -192,9 +193,14 @@ class ScanNotifier extends StateNotifier<ScanState> {
   ///   3. Sends cropped image to /detect, then /analyze. Only purple/sticker shape in ROI is accepted.
   ///
   /// Original and cropped temp files are deleted after use.
+  ///
+  /// [cumulativeDoseJm2] and [uvIndex] are passed at call time (from home state)
+  /// so the notifier stays stateless and avoids unnecessary rebuilds.
   Future<UvAnalysisResult?> captureAndAnalyse({
     required int fitzpatrickType,
     required int spf,
+    required double cumulativeDoseJm2,
+    required double uvIndex,
     double hoursSinceApplication = 0.0,
   }) async {
     final ctrl = _cameraController;
@@ -302,17 +308,12 @@ class ScanNotifier extends StateNotifier<ScanState> {
       ambientLux: currentLux,
       fitzpatrickType: fitzpatrickType,
       spf: spf,
-    );
-
-    final repository = ScanRepositoryImpl(
-      remoteDatasource: _deps.remoteDatasource,
-      networkInfo: _deps.networkInfo,
-      cumulativeDoseJm2: currentDoseJm2,
-      uvIndex: currentUvIndex,
+      cumulativeDoseJm2: cumulativeDoseJm2,
+      uvIndex: uvIndex,
       hoursSinceApplication: hoursSinceApplication,
     );
 
-    final either = await AnalyzeSticker(repository)(request);
+    final either = await AnalyzeSticker(_deps.repository)(request);
 
     _deleteFile(photo.path);
     _deleteFile(imagePathForApi);
@@ -342,33 +343,8 @@ class ScanNotifier extends StateNotifier<ScanState> {
   }
 }
 
-/// MED baselines (J/m²) per Fitzpatrick type — mirrors backend MED_TABLE.
-const Map<int, double> _medTable = {
-  1: 200.0, 2: 250.0, 3: 350.0, 4: 500.0, 5: 700.0, 6: 1000.0,
-};
-
 final scanNotifierProvider =
     StateNotifierProvider.autoDispose<ScanNotifier, ScanState>((ref) {
-  final homeState = ref.watch(homeNotifierProvider);
   final deps = ref.watch(analyzeStickerUseCaseProvider);
-  final prefs = ref.read(sharedPreferencesProvider);
-
-  int fitzpatrickType = 2;
-  try {
-    final raw = prefs.getString('skin_profile');
-    if (raw != null) {
-      final map = jsonDecode(raw) as Map<String, dynamic>;
-      fitzpatrickType = (map['fitzpatrick_type'] as int?) ?? 2;
-    }
-  } catch (_) {}
-
-  final medBaseline = _medTable[fitzpatrickType.clamp(1, 6)] ?? 250.0;
-  final doseJm2 = (homeState.doseSummary?.medUsedFraction ?? 0.0) * medBaseline;
-  final uvIdx = homeState.uvIndex?.value ?? 5.0;
-
-  return ScanNotifier(
-    deps: deps,
-    currentDoseJm2: doseJm2,
-    currentUvIndex: uvIdx,
-  );
+  return ScanNotifier(deps: deps);
 });

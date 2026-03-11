@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../app/di/providers.dart';
 import '../../../../core/utils/logger.dart';
 import '../../data/datasources/skin_profile_local_datasource.dart';
 import '../../data/repositories/skin_profile_repository_impl.dart';
@@ -10,6 +11,7 @@ import '../../domain/usecases/save_skin_profile.dart';
 // ── Infrastructure providers ─────────────────────────────────────────────────
 
 /// Pre-initialised in main.dart via ProviderScope.overrides — never throws.
+/// Used for non-sensitive settings (locale, theme).
 final sharedPreferencesProvider = Provider<SharedPreferences>(
   (_) => throw UnimplementedError(
     'sharedPreferencesProvider must be overridden in ProviderScope',
@@ -18,8 +20,8 @@ final sharedPreferencesProvider = Provider<SharedPreferences>(
 
 final skinProfileLocalDatasourceProvider =
     Provider<SkinProfileLocalDatasource>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return SkinProfileLocalDatasourceImpl(prefs);
+  final storage = ref.watch(secureStorageProvider);
+  return SkinProfileLocalDatasourceImpl(storage);
 });
 
 final skinProfileRepositoryProvider = Provider<SkinProfileRepository>((ref) {

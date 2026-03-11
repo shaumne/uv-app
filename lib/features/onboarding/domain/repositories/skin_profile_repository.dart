@@ -12,4 +12,7 @@ abstract interface class SkinProfileRepository {
 
   /// Returns [true] if the user has completed onboarding.
   Future<bool> isOnboardingComplete();
+
+  /// Clears stored profile and onboarding flag (e.g. on logout/reset).
+  Future<Either<Failure, Unit>> clear();
 }

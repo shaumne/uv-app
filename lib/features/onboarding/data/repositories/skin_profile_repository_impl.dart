@@ -36,4 +36,15 @@ class SkinProfileRepositoryImpl implements SkinProfileRepository {
   @override
   Future<bool> isOnboardingComplete() =>
       _datasource.isOnboardingComplete();
+
+  @override
+  Future<Either<Failure, Unit>> clear() async {
+    try {
+      await _datasource.clear();
+      return const Right(unit);
+    } on CacheException catch (e) {
+      appLogger.e('SkinProfileRepository.clear', error: e);
+      return Left(CacheFailure(e.message));
+    }
+  }
 }

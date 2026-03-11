@@ -24,7 +24,7 @@ class UvDosimeterApp extends ConsumerWidget {
       title: 'BlancMate',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      routerConfig: appRouter,
+      routerConfig: ref.watch(routerProvider),
       // Drive locale from user setting; falls back to device locale when null.
       locale: locale,
       localizationsDelegates: const [

@@ -11,6 +11,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../onboarding/presentation/providers/skin_profile_provider.dart';
+import '../../../home/presentation/providers/home_provider.dart';
 import '../providers/scan_provider.dart';
 import '../widgets/pulse_overlay_frame.dart';
 
@@ -175,9 +176,18 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   Future<void> _capture(ScanNotifier notifier) async {
     final profileAsync = ref.read(storedSkinProfileProvider);
     final profile = profileAsync.maybeWhen(data: (p) => p, orElse: () => null);
+    final homeState = ref.read(homeNotifierProvider);
+    const medTable = {1: 200.0, 2: 250.0, 3: 350.0, 4: 500.0, 5: 700.0, 6: 1000.0};
+    final fitzpatrick = profile?.fitzpatrickType ?? 2;
+    final medBaseline = medTable[fitzpatrick.clamp(1, 6)] ?? 250.0;
+    final doseJm2 = (homeState.doseSummary?.medUsedFraction ?? 0.0) * medBaseline;
+    final uvIdx = homeState.uvIndex?.value ?? 5.0;
+
     await notifier.captureAndAnalyse(
-      fitzpatrickType: profile?.fitzpatrickType ?? 2,
+      fitzpatrickType: fitzpatrick,
       spf: profile?.spf ?? 30,
+      cumulativeDoseJm2: doseJm2,
+      uvIndex: uvIdx,
       hoursSinceApplication: profile?.hoursSinceApplication ?? 0.0,
     );
   }

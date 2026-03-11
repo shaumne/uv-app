@@ -150,9 +150,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   /// Clears the skin profile and onboarding flag — resets to first-launch state.
   Future<void> resetProfile() async {
-    final prefs = _ref.read(sharedPreferencesProvider);
-    await prefs.remove('skin_profile');
-    await prefs.remove('onboarding_complete');
+    final repo = _ref.read(skinProfileRepositoryProvider);
+    await repo.clear();
     _ref.invalidate(storedSkinProfileProvider);
     appLogger.i('[Settings] Profile reset.');
   }

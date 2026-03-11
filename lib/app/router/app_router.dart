@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uv_dosimeter/l10n/app_localizations.dart';
 import 'route_names.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../features/history/presentation/screens/history_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/onboarding/presentation/providers/onboarding_provider.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/onboarding/presentation/screens/skin_type_picker_screen.dart';
 import '../../features/premium/screens/premium_upsell_sheet.dart';
@@ -19,27 +19,25 @@ import '../../features/settings/presentation/screens/settings_screen.dart';
 
 /// Provider that exposes the router — allows GoRouter to listen to
 /// Riverpod state for auth/onboarding redirects.
-final routerProvider = Provider<GoRouter>((ref) => appRouter);
+final routerProvider = Provider<GoRouter>((ref) => _createAppRouter(ref));
 
 /// Application router with onboarding guard redirect.
 ///
-/// Checks SharedPreferences for the 'onboarding_complete' flag.
-/// If absent → redirects to /onboarding.
+/// Checks secure storage for onboarding completion via [SkinProfileRepository].
 /// All transitions use a premium fade+slide (280ms, easeOutCubic).
-final appRouter = GoRouter(
+GoRouter _createAppRouter(Ref ref) => GoRouter(
   initialLocation: RouteNames.home,
   debugLogDiagnostics: !const bool.fromEnvironment('dart.vm.product'),
   redirect: (context, state) async {
-    // Skip guard for onboarding routes themselves
     final loc = state.uri.toString();
     if (loc.startsWith(RouteNames.onboarding)) return null;
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final isOnboarded = prefs.getBool('onboarding_complete') ?? false;
+      final repo = ref.read(skinProfileRepositoryProvider);
+      final isOnboarded = await repo.isOnboardingComplete();
       if (!isOnboarded) return RouteNames.onboarding;
     } catch (_) {
-      // If prefs fails, allow through — don't block app startup
+      // If read fails, allow through — don't block app startup
     }
     return null;
   },

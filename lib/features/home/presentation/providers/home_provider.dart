@@ -1,10 +1,10 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../app/di/providers.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
+import '../../../onboarding/presentation/providers/skin_profile_provider.dart';
 import '../../data/datasources/dose_history_local_datasource.dart';
 import '../../data/datasources/uv_index_remote_datasource.dart';
 import '../../data/repositories/dose_history_repository_impl.dart';
@@ -21,9 +21,7 @@ final uvIndexRemoteDatasourceProvider = Provider<UvIndexRemoteDatasource>(
 );
 
 final doseHistoryLocalDatasourceProvider = Provider<DoseHistoryLocalDatasource>(
-  (ref) => DoseHistoryLocalDatasourceImpl(
-    ref.watch(sharedPreferencesProvider),
-  ),
+  (ref) => DoseHistoryLocalDatasourceImpl(ref.watch(secureStorageProvider)),
 );
 
 final uvIndexRepositoryProvider = Provider(
@@ -234,17 +232,9 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
 final homeNotifierProvider =
     StateNotifierProvider.autoDispose<HomeNotifier, HomeState>((ref) {
-  // Read cached Fitzpatrick type from SharedPreferences (pre-initialised).
-  final prefs = ref.watch(sharedPreferencesProvider);
-
-  int fitzpatrickType = 2;
-  final raw = prefs.getString('skin_profile');
-  if (raw != null) {
-    try {
-      final map = jsonDecode(raw) as Map<String, dynamic>;
-      fitzpatrickType = (map['fitzpatrick_type'] as int?) ?? 2;
-    } catch (_) {}
-  }
+  final profileAsync = ref.watch(storedSkinProfileProvider);
+  final fitzpatrickType =
+      profileAsync.maybeWhen(data: (p) => p.fitzpatrickType, orElse: () => 2);
 
   final notifier = HomeNotifier(
     getUvIndex: ref.watch(getUvIndexUseCaseProvider),

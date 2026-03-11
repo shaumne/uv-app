@@ -1,7 +1,6 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/error/exceptions.dart';
-import '../../../../core/constants/uv_constants.dart';
 
 abstract interface class DoseHistoryLocalDatasource {
   /// Returns cumulative dose in J/m² for today.
@@ -16,10 +15,10 @@ abstract interface class DoseHistoryLocalDatasource {
 }
 
 /// Stores daily dose as JSON keyed by calendar date (yyyy-MM-dd).
-/// Automatically resets when the date changes.
+/// Uses secure storage (Keychain/Keystore) for GDPR/KVKK compliance.
 class DoseHistoryLocalDatasourceImpl implements DoseHistoryLocalDatasource {
-  const DoseHistoryLocalDatasourceImpl(this._prefs);
-  final SharedPreferences _prefs;
+  const DoseHistoryLocalDatasourceImpl(this._storage);
+  final FlutterSecureStorage _storage;
 
   static const _keyDoseHistory = 'dose_history';
 
@@ -31,7 +30,7 @@ class DoseHistoryLocalDatasourceImpl implements DoseHistoryLocalDatasource {
   @override
   Future<double> getTodayCumulativeDoseJm2() async {
     try {
-      final raw = _prefs.getString(_keyDoseHistory);
+      final raw = await _storage.read(key: _keyDoseHistory);
       if (raw == null) return 0.0;
       final map = jsonDecode(raw) as Map<String, dynamic>;
       return (map[_todayKey] as num?)?.toDouble() ?? 0.0;
@@ -43,12 +42,12 @@ class DoseHistoryLocalDatasourceImpl implements DoseHistoryLocalDatasource {
   @override
   Future<void> saveCumulativeDoseJm2(double doseJm2) async {
     try {
-      final raw = _prefs.getString(_keyDoseHistory);
+      final raw = await _storage.read(key: _keyDoseHistory);
       final map = raw != null
           ? jsonDecode(raw) as Map<String, dynamic>
           : <String, dynamic>{};
       map[_todayKey] = doseJm2;
-      await _prefs.setString(_keyDoseHistory, jsonEncode(map));
+      await _storage.write(key: _keyDoseHistory, value: jsonEncode(map));
     } catch (e) {
       throw CacheException(message: 'Failed to save dose history: $e');
     }
@@ -57,7 +56,7 @@ class DoseHistoryLocalDatasourceImpl implements DoseHistoryLocalDatasource {
   @override
   Future<Map<String, double>> getHistoryForDays(int days) async {
     try {
-      final raw = _prefs.getString(_keyDoseHistory);
+      final raw = await _storage.read(key: _keyDoseHistory);
       final stored = raw != null
           ? jsonDecode(raw) as Map<String, dynamic>
           : <String, dynamic>{};

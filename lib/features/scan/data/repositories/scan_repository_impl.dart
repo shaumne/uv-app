@@ -12,16 +12,10 @@ class ScanRepositoryImpl implements ScanRepository {
   const ScanRepositoryImpl({
     required this.remoteDatasource,
     required this.networkInfo,
-    required this.cumulativeDoseJm2,
-    required this.uvIndex,
-    required this.hoursSinceApplication,
   });
 
   final ScanRemoteDatasource remoteDatasource;
   final NetworkInfo networkInfo;
-  final double cumulativeDoseJm2;
-  final double uvIndex;
-  final double hoursSinceApplication;
 
   @override
   Future<Either<Failure, UvAnalysisResult>> analyzeSticker(
@@ -31,12 +25,7 @@ class ScanRepositoryImpl implements ScanRepository {
       return const Left(NetworkFailure());
     }
     try {
-      final result = await remoteDatasource.analyzeSticker(
-        request: request,
-        cumulativeDoseJm2: cumulativeDoseJm2,
-        uvIndex: uvIndex,
-        hoursSinceApplication: hoursSinceApplication,
-      );
+      final result = await remoteDatasource.analyzeSticker(request: request);
       return Right(result);
     } on NetworkException catch (e) {
       appLogger.w('[ScanRepo] Network: ${e.message}');

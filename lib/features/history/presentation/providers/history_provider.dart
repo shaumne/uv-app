@@ -1,9 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../home/data/datasources/dose_history_local_datasource.dart';
 import '../../../home/presentation/providers/home_provider.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
+import '../../../onboarding/presentation/providers/skin_profile_provider.dart';
 
 /// A single day's UV dose summary for the history screen.
 class DayDoseEntry {
@@ -36,29 +35,19 @@ class DayDoseEntry {
 
 const _medTable = {1: 200.0, 2: 250.0, 3: 350.0, 4: 500.0, 5: 700.0, 6: 1000.0};
 
-double _resolveMedBaseline(String? profileJson) {
-  if (profileJson == null) return 250.0;
-  try {
-    final map = jsonDecode(profileJson) as Map<String, dynamic>;
-    final type = (map['fitzpatrick_type'] as int?) ?? 2;
-    return _medTable[type.clamp(1, 6)] ?? 250.0;
-  } catch (_) {
-    return 250.0;
-  }
-}
-
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 /// Returns the last 7 days of UV dose data as an ordered list (oldest → newest).
 ///
 /// Converts raw J/m² into MED fractions using the user's Fitzpatrick type
-/// from SharedPreferences — matches the Dermatology_Math_Engine skill pipeline.
+/// from secure storage — matches the Dermatology_Math_Engine skill pipeline.
 final weeklyDoseHistoryProvider =
     FutureProvider.autoDispose<List<DayDoseEntry>>((ref) async {
   final datasource = ref.watch(doseHistoryLocalDatasourceProvider);
-  final prefs = ref.read(sharedPreferencesProvider);
-
-  final medBaseline = _resolveMedBaseline(prefs.getString('skin_profile'));
+  final profileAsync = ref.watch(storedSkinProfileProvider);
+  final fitzpatrickType =
+      profileAsync.maybeWhen(data: (p) => p.fitzpatrickType, orElse: () => 2);
+  final medBaseline = _medTable[fitzpatrickType.clamp(1, 6)] ?? 250.0;
   final history = await datasource.getHistoryForDays(7);
   final now = DateTime.now();
 

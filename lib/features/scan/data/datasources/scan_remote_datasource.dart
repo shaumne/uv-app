@@ -24,12 +24,7 @@ class StickerDetectionResult {
 }
 
 abstract interface class ScanRemoteDatasource {
-  Future<UvAnalysisResult> analyzeSticker({
-    required ScanRequest request,
-    required double cumulativeDoseJm2,
-    required double uvIndex,
-    required double hoursSinceApplication,
-  });
+  Future<UvAnalysisResult> analyzeSticker({required ScanRequest request});
 
   /// Lightweight check — returns detection result without full MED analysis.
   /// [ambientLux] is used for adaptive HSV mask on the backend (optional; default 1000).
@@ -46,18 +41,10 @@ class ScanRemoteDatasourceImpl implements ScanRemoteDatasource {
   @override
   Future<UvAnalysisResult> analyzeSticker({
     required ScanRequest request,
-    required double cumulativeDoseJm2,
-    required double uvIndex,
-    required double hoursSinceApplication,
   }) async {
     FormData formData;
     try {
-      formData = await ScanRequestModel.toFormData(
-        request,
-        cumulativeDoseJm2,
-        uvIndex,
-        hoursSinceApplication,
-      );
+      formData = await ScanRequestModel.toFormData(request);
     } catch (e) {
       throw ImageProcessingException(
         message: 'Failed to prepare image for upload: $e',
