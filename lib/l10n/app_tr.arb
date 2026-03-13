@@ -148,6 +148,11 @@
   "scan_sticker_tooDark": "Daha iyi aydınlatmaya gidin",
   "scan_sticker_captureDisabledHint": "Çekim için sticker'ı çerçeveye hizalayın",
 
+  "scan_newSticker_title": "Yeni sticker mı kullandın?",
+  "scan_newSticker_body": "Mevcut sticker, önceki UV okumalarından daha yeni görünüyor. Yeni bir sticker yapıştırdıysan, bugünkü UV takibini bu sticker üzerinden başlatabiliriz.",
+  "scan_newSticker_confirm": "Evet, yeni sticker taktım",
+  "scan_newSticker_cancel": "Hayır, aynı sticker",
+
   "settings_title": "Ayarlar",
   "settings_section_language": "Dil",
   "settings_language_en": "English",

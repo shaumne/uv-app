@@ -3,7 +3,8 @@ import 'package:equatable/equatable.dart';
 /// Full UV analysis result from the FastAPI backend.
 ///
 /// Merges both ComputerVision_Colorimetry and Dermatology_Math_Engine
-/// skill response schemas into one domain entity.
+/// skill response schemas into one domain entity, plus sticker/cumulative
+/// separation metadata for robust state handling.
 class UvAnalysisResult extends Equatable {
   const UvAnalysisResult({
     required this.hexColor,
@@ -14,6 +15,10 @@ class UvAnalysisResult extends Equatable {
     required this.spfEffectiveNow,
     required this.sunscreenReapplyRecommended,
     required this.analyzedAt,
+    required this.cumulativeDoseJm2,
+    required this.stickerDoseJm2,
+    required this.previousCumulativeDoseJm2,
+    required this.stickerResetSuspected,
   });
 
   /// Dominant sticker colour in '#RRGGBB' format.
@@ -39,6 +44,24 @@ class UvAnalysisResult extends Equatable {
 
   final DateTime analyzedAt;
 
+  /// Server-reported cumulative UV dose for today in J/m².
+  ///
+  /// This is the value that should normally be persisted to dose history.
+  final double cumulativeDoseJm2;
+
+  /// UV dose implied by the current sticker reading alone (J/m²).
+  ///
+  /// Used to detect potential "new sticker" events when significantly
+  /// lower than [previousCumulativeDoseJm2].
+  final double stickerDoseJm2;
+
+  /// Cumulative dose value sent by the client in the analyse request (J/m²).
+  final double previousCumulativeDoseJm2;
+
+  /// True when the backend suspects a sticker reset based on a large
+  /// downward jump between [previousCumulativeDoseJm2] and [stickerDoseJm2].
+  final bool stickerResetSuspected;
+
   bool get isSafe => riskLevel == 'safe';
   bool get isCaution => riskLevel == 'caution';
   bool get isWarning => riskLevel == 'warning';
@@ -49,6 +72,8 @@ class UvAnalysisResult extends Equatable {
 
   double get medUsedPercent => (medUsedFraction * 100).clamp(0, 999);
 
+  bool get isStickerResetSuspected => stickerResetSuspected;
+
   @override
   List<Object> get props => [
         hexColor,
@@ -56,6 +81,12 @@ class UvAnalysisResult extends Equatable {
         medUsedFraction,
         remainingMinutes,
         riskLevel,
+        spfEffectiveNow,
+        sunscreenReapplyRecommended,
         analyzedAt,
+        cumulativeDoseJm2,
+        stickerDoseJm2,
+        previousCumulativeDoseJm2,
+        stickerResetSuspected,
       ];
 }

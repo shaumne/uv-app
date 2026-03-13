@@ -154,6 +154,11 @@
   "scan_sticker_tooDark": "Move to better lighting",
   "scan_sticker_captureDisabledHint": "Align the sticker in the frame to capture",
 
+  "scan_newSticker_title": "New sticker detected?",
+  "scan_newSticker_body": "Your current sticker looks much fresher than your previous UV readings. Did you apply a new patch? If yes, we’ll start today’s UV tracking from this sticker.",
+  "scan_newSticker_confirm": "Yes, I applied a new sticker",
+  "scan_newSticker_cancel": "No, it’s the same sticker",
+
   "settings_title": "Settings",
   "settings_section_language": "Language",
   "settings_language_en": "English",

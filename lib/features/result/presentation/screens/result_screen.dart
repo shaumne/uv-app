@@ -37,21 +37,38 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   @override
   void initState() {
     super.initState();
-    // Persist dose immediately after screen mounts
-    _saveDose();
+    // Persist dose after first frame and handle potential sticker reset UX.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleDoseWithStickerResetFlow();
+    });
   }
 
-  Future<void> _saveDose() async {
+  Future<void> _handleDoseWithStickerResetFlow() async {
+    final context = this.context;
+    if (!mounted) return;
+
+    bool useStickerAsBaseline = false;
+
+    if (widget.result.isStickerResetSuspected &&
+        widget.result.stickerDoseJm2 <
+            widget.result.previousCumulativeDoseJm2) {
+      final confirmed = await _showNewStickerDialog(context);
+      useStickerAsBaseline = confirmed == true;
+    }
+
+    await _saveDose(useStickerAsBaseline: useStickerAsBaseline);
+  }
+
+  Future<void> _saveDose({required bool useStickerAsBaseline}) async {
     // Show interstitial ad when feature is enabled (currently dormant)
     AdService.showInterstitial();
     final profileAsync = ref.read(storedSkinProfileProvider);
     final profile = profileAsync.maybeWhen(data: (p) => p, orElse: () => null);
     final fitzpatrickType = profile?.fitzpatrickType ?? 2;
 
-    // Convert medUsedFraction back to J/m² using the correct MED baseline
-    final medBase = {1: 200, 2: 250, 3: 350, 4: 500, 5: 700, 6: 1000};
-    final baseline = (medBase[fitzpatrickType] ?? 250).toDouble();
-    final cumulativeJm2 = widget.result.medUsedFraction * baseline;
+    final cumulativeJm2 = useStickerAsBaseline
+        ? widget.result.stickerDoseJm2
+        : widget.result.cumulativeDoseJm2;
 
     final repo = ref.read(doseHistoryRepositoryProvider);
     await SaveDoseRecord(repo)(
@@ -59,6 +76,73 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       fitzpatrickType: fitzpatrickType,
     );
     ref.invalidate(homeNotifierProvider);
+  }
+
+  Future<bool?> _showNewStickerDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.cardSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        final mediaQuery = MediaQuery.of(ctx);
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: mediaQuery.viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.subtleDivider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.scan_newSticker_title,
+                style: AppTypography.headlineMed,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n.scan_newSticker_body,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.deepInk.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: Text(l10n.scan_newSticker_confirm),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: Text(l10n.scan_newSticker_cancel),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Color get _backgroundTint {

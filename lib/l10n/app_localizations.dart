@@ -730,6 +730,30 @@ abstract class AppLocalizations {
   /// **'Align the sticker in the frame to capture'**
   String get scan_sticker_captureDisabledHint;
 
+  /// No description provided for @scan_newSticker_title.
+  ///
+  /// In en, this message translates to:
+  /// **'New sticker detected?'**
+  String get scan_newSticker_title;
+
+  /// No description provided for @scan_newSticker_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current sticker looks much fresher than your previous UV readings. Did you apply a new patch? If yes, we’ll start today’s UV tracking from this sticker.'**
+  String get scan_newSticker_body;
+
+  /// No description provided for @scan_newSticker_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, I applied a new sticker'**
+  String get scan_newSticker_confirm;
+
+  /// No description provided for @scan_newSticker_cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'No, it’s the same sticker'**
+  String get scan_newSticker_cancel;
+
   /// No description provided for @settings_title.
   ///
   /// In en, this message translates to:

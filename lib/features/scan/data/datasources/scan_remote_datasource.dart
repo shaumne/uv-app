@@ -163,6 +163,9 @@ class ScanRemoteDatasourceImpl implements ScanRemoteDatasource {
     return UvAnalysisResult(
       hexColor: json['hex_color'] as String,
       uvPercent: (json['uv_percent'] as num).toDouble(),
+      // dose_percentage on the backend is explicitly set to the sticker's
+      // UV% reading, not SPF-adjusted MED fraction. Using it here keeps the
+      // user-facing "daily limit used" copy aligned with sticker colour.
       medUsedFraction: (json['dose_percentage'] as num).toDouble() / 100.0,
       remainingMinutes: (json['minutes_remaining'] as num).toInt(),
       riskLevel: json['risk_level'] as String,
@@ -170,6 +173,18 @@ class ScanRemoteDatasourceImpl implements ScanRemoteDatasource {
       sunscreenReapplyRecommended:
           json['sunscreen_reapply_recommended'] as bool? ?? false,
       analyzedAt: DateTime.now(),
+      cumulativeDoseJm2:
+          (json['cumulative_dose_jm2'] as num?)?.toDouble() ?? 0.0,
+      stickerDoseJm2:
+          (json['sticker_dose_jm2'] as num?)?.toDouble() ??
+              (json['cumulative_dose_jm2'] as num?)?.toDouble() ??
+              0.0,
+      previousCumulativeDoseJm2:
+          (json['previous_cumulative_dose_jm2'] as num?)?.toDouble() ??
+              (json['cumulative_dose_jm2'] as num?)?.toDouble() ??
+              0.0,
+      stickerResetSuspected:
+          json['sticker_reset_suspected'] as bool? ?? false,
     );
   }
 }

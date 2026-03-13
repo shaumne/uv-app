@@ -364,6 +364,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Align the sticker in the frame to capture';
 
   @override
+  String get scan_newSticker_title => 'New sticker detected?';
+
+  @override
+  String get scan_newSticker_body =>
+      'Your current sticker looks much fresher than your previous UV readings. Did you apply a new patch? If yes, we’ll start today’s UV tracking from this sticker.';
+
+  @override
+  String get scan_newSticker_confirm => 'Yes, I applied a new sticker';
+
+  @override
+  String get scan_newSticker_cancel => 'No, it’s the same sticker';
+
+  @override
   String get settings_title => 'Settings';
 
   @override

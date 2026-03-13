@@ -373,6 +373,19 @@ class AppLocalizationsTr extends AppLocalizations {
       'Çekim için sticker\'ı çerçeveye hizalayın';
 
   @override
+  String get scan_newSticker_title => 'Yeni sticker mı kullandın?';
+
+  @override
+  String get scan_newSticker_body =>
+      'Mevcut sticker, önceki UV okumalarından daha yeni görünüyor. Yeni bir sticker yapıştırdıysan, bugünkü UV takibini bu sticker üzerinden başlatabiliriz.';
+
+  @override
+  String get scan_newSticker_confirm => 'Evet, yeni sticker taktım';
+
+  @override
+  String get scan_newSticker_cancel => 'Hayır, aynı sticker';
+
+  @override
   String get settings_title => 'Ayarlar';
 
   @override

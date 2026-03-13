@@ -15,17 +15,19 @@ Returns [AnalyzeResponse] — full merged colorimetry + dermatology payload.
 import logging
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
+from ....core.rate_limiter import limiter
 from ....models.response_models import AnalyzeResponse
 from ....services.colorimetry_service import extract_sticker_data
-from ....services.med_calculator import calculate_uv_risk, classify_risk_by_sticker, uv_percent_to_dose_jm2
+from ....services.med_calculator import (
+    calculate_uv_risk,
+    classify_risk_by_sticker,
+    uv_percent_to_dose_jm2,
+)
 from ....utils.image_validator import validate_image
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post(
@@ -113,14 +115,38 @@ async def analyze_sticker(
             detail="Internal image processing error.",
         ) from exc
 
-    # ── Step 3: Sticker UV% → cumulative dose (J/m²) ────────────────────────────
-    # The photochromic sticker reading is cumulative (total exposure so far), not
-    # an increment. So cumulative_dose_jm2 for this reading = (uv_percent/100)*MED_base.
-    # We use the sticker-derived value as the cumulative; do not add to client
-    # value to avoid double-counting when the user rescans.
+    # ── Step 3: Sticker UV% → sticker dose (J/m²) + cumulative reconciliation ──
+    # Sticker okuması foto-kromik boya üzerinde biriken toplam dozu temsil eder,
+    # fakat kullanıcının cildindeki birikmiş risk ile "tekil sticker" üzerindeki
+    # risk birbirinden ayrılmalıdır. Özellikle:
+    #
+    # - Aynı sticker ile tekrar tarama: sticker dozu (scan_dose_jm2) mevcut
+    #   kümülatif doza yakın veya daha yüksek olmalıdır → yeni üst sınır.
+    # - Kullanıcı sticker'ı değiştirirse: yeni sticker başlangıçta daha beyaz
+    #   görünebilir ve scan_dose_jm2 önceki cumulative_dose_jm2 değerinden
+    #   anlamlı derecede küçük olur. Bu durumda sunucu, dozu "sıfırlamamalı",
+    #   frontende "reset şüphesi" sinyali göndermeli ve kümülatifi korumalıdır.
     try:
+        prior_cumulative = float(cumulative_dose_jm2)
         scan_dose_jm2 = uv_percent_to_dose_jm2(uv_percent, skin_type)
-        updated_cumulative = scan_dose_jm2
+
+        # Başlangıçta, sticker okumasını mevcut kümülatif ile uzlaştır.
+        # Varsayılan davranış: azalma yoksa veya çok küçük bir oynama varsa,
+        # sticker değeri yeni kümülatif olarak kabul edilir.
+        updated_cumulative = max(prior_cumulative, scan_dose_jm2)
+        sticker_reset_suspected = False
+
+        if prior_cumulative > 0:
+            drop = prior_cumulative - scan_dose_jm2
+            drop_ratio = drop / prior_cumulative
+
+            # %15'ten büyük düşüş: muhtemelen yeni sticker takıldı veya
+            # kalibrasyon aralığının dışında anormal bir okuma var.
+            if drop_ratio > 0.15:
+                sticker_reset_suspected = True
+                # Kritik: Kullanıcının cildindeki birikmiş riski istemeden
+                # azaltmamak için, bu durumda önceki kümülatifi koruyoruz.
+                updated_cumulative = prior_cumulative
     except ValueError as exc:
         logger.error("Dose conversion failed: %s", exc)
         raise HTTPException(
@@ -158,6 +184,13 @@ async def analyze_sticker(
     # dose_percentage shown to user = sticker UV%, not SPF-adjusted fraction.
     # This ensures the displayed percentage matches what the sticker reads.
     risk_payload["dose_percentage"] = round(min(uv_percent, 999.9), 1)
+
+    # Sticker/cilt ayrıştırma metadatasını yanıta ekle; frontend bu bilgiyi
+    # "Yeni sticker mı taktınız?" diyalogunu göstermek ve lokal state'i
+    # güncellemek için kullanabilir.
+    risk_payload["sticker_dose_jm2"] = scan_dose_jm2
+    risk_payload["previous_cumulative_dose_jm2"] = cumulative_dose_jm2
+    risk_payload["sticker_reset_suspected"] = sticker_reset_suspected
 
     return AnalyzeResponse(
         hex_color=hex_color,

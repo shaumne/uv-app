@@ -353,6 +353,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scan_sticker_captureDisabledHint => '撮影するにはフレーム内にステッカーを合わせてください';
 
   @override
+  String get scan_newSticker_title => '新しいパッチですか？';
+
+  @override
+  String get scan_newSticker_body =>
+      '今回のパッチは、これまでの紫外線量よりもずっとフレッシュに見えます。もし新しいUVパッチに貼り替えた場合は、今日の紫外線ケアをこのパッチからカウントし直すことができます。';
+
+  @override
+  String get scan_newSticker_confirm => 'はい、新しいパッチに替えました';
+
+  @override
+  String get scan_newSticker_cancel => 'いいえ、同じパッチです';
+
+  @override
   String get settings_title => '設定';
 
   @override
